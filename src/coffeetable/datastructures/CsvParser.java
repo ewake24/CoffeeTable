@@ -7,7 +7,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -104,7 +103,7 @@ public class CsvParser {
 		
 		int rowCount = 0;
 		String[] headerlist = null;
-		LinkedList<Class<?>> schema = null;
+		Schema schema = null;
 		try {
 			while( (line = br.readLine()) != null ) {
 				if(!line.contains(delimiter)) {
@@ -127,7 +126,7 @@ public class CsvParser {
 				}
 				
 				if(null == schema) {
-					schema = new LinkedList<Class<?>>();
+					schema = new Schema();
 					for(int i = 0; i < row.length; i++)
 						schema.add(String.class);
 				}

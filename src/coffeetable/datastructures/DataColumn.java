@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import coffeetable.interfaces.VectorUtilities;
 import coffeetable.utils.MissingValueException;
 import coffeetable.utils.SchemaMismatchException;
 

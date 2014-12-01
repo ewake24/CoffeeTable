@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
+import coffeetable.interfaces.RowUtilities;
+import coffeetable.interfaces.VectorUtilities;
 import coffeetable.io.DataTableWriter;
 import coffeetable.io.HtmlTableWriter;
 import coffeetable.utils.DimensionMismatchException;
@@ -40,7 +42,7 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 	private List<DataColumn> cols;
 	private List<DataRow> rows;
 	private String tableName;
-	private LinkedList<Class<? extends Object>> schema;
+	private Schema schema;
 	private ArrayList<Exception> exceptionLog;
 	private HashMap<String, Integer> options;
 	
@@ -166,7 +168,6 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 			else return Integer.class;
 		}
 	}
-	
 	
 	/**
 	 * Options hashmap instantiator. Internal class to avoid a second
@@ -973,7 +974,7 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 	/**
 	 * Return the DataTable's schema
 	 */
-	public LinkedList<Class<?>> schema() {
+	public Schema schema() {
 		return schema;
 	}
 	
@@ -981,41 +982,11 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 	 * Determine whether the schema is numeric
 	 */
 	public boolean schemaIsNumeric() {
-		if(null==schema)
-			return false;
-		for(Class c : schema) {
-			if(!Number.class.isAssignableFrom(c))
-				return false;
-		}
-		return true;
+		return schema.isNumeric();
 	}
 	
-	@SuppressWarnings("unchecked")
-	private final boolean schemaIsSafe(LinkedList<Class<?>> sch) {
-		if(!(schema.contains(MissingValue.class) || sch.contains(MissingValue.class)))
-			return schema.equals(sch);
-		if(sch.size() != schema.size())
-			return false;
-		HashMap<Integer, Class> postcheckSetter = new HashMap<Integer, Class>();
-		//Check...
-		for(int i = 0; i < sch.size(); i++) {
-			Class<?> c = sch.get(i);
-			if(c.equals(MissingValue.class))
-				continue;
-			else if(schema.get(i).equals(MissingValue.class)) {
-				postcheckSetter.put(i, c);
-				continue;
-			} else if(!c.equals(schema.get(i))) {
-				return false;
-			}
-		}
-		
-		//Amend schema if needed...
-		if(!postcheckSetter.isEmpty()) {
-			for(Integer key : postcheckSetter.keySet())
-				schema.set(key, postcheckSetter.get(key));
-		}
-		return true;
+	private final boolean schemaIsSafe(Schema sch) {
+		return schema.isSafe(sch);
 	}
 	
 	/**
@@ -1125,26 +1096,26 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 		this.setColNames(newColNames);
 	}
 	
-	private final LinkedList<Class<? extends Object>> updateSchema(Class<? extends Object> appendable) {
-		LinkedList<Class<? extends Object>> list = schema;
+	private Schema updateSchema(Class<? extends Object> appendable) {
+		Schema list = schema;
 		list.add(appendable);
 		return list;
 	}
 	
-	private final LinkedList<Class<? extends Object>> updateSchemaAt(int index, Class<? extends Object> appendable) {
-		LinkedList<Class<? extends Object>> list = schema;
+	private Schema updateSchemaAt(int index, Class<? extends Object> appendable) {
+		Schema list = schema;
 		list.add(index, appendable);
 		return list;
 	}
 	
-	private final LinkedList<Class<? extends Object>> updateSchemaFromNew(Class<? extends Object> appendable) {
-		LinkedList<Class<? extends Object>> list = new LinkedList<Class<? extends Object>>();
+	private Schema updateSchemaFromNew(Class<? extends Object> appendable) {
+		Schema list = new Schema();
 		list.add(appendable);
 		return list;
 	}
 	
-	private final LinkedList<Class<? extends Object>> updateSchemaFromRemove(int index) {
-		LinkedList<Class<? extends Object>> list = schema;
+	private Schema updateSchemaFromRemove(int index) {
+		Schema list = schema;
 		list.remove(index);
 		return list;
 	}

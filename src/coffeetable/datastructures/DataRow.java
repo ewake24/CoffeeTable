@@ -4,8 +4,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedList;
 
+import coffeetable.interfaces.RowUtilities;
+import coffeetable.interfaces.VectorUtilities;
 import coffeetable.utils.SchemaMismatchException;
 
 
@@ -13,7 +14,7 @@ import coffeetable.utils.SchemaMismatchException;
 public class DataRow extends ArrayList implements VectorUtilities, RowUtilities {
 	private static final long serialVersionUID = 3148244157795837127L;
 	private String name;
-	private transient LinkedList<Class<? extends Object>> schema = null;
+	private transient Schema schema = new Schema();
 	
 	public DataRow(int initSize) {
 		super(initSize);
@@ -157,7 +158,7 @@ public class DataRow extends ArrayList implements VectorUtilities, RowUtilities 
 		schema = null;
 	}
 	
-	public LinkedList<Class<? extends Object>> schema() {
+	public Schema schema() {
 		if(!(null == schema))
 			return schema;
 		return typeSafetyList();
@@ -179,13 +180,7 @@ public class DataRow extends ArrayList implements VectorUtilities, RowUtilities 
 	}
 	
 	public boolean schemaIsNumeric() {
-		if(null==schema)
-			return false;
-		for(Class c : schema) {
-			if(!Number.class.isAssignableFrom(c))
-				return false;
-		}
-		return true;
+		return schema.isNumeric();
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -206,7 +201,7 @@ public class DataRow extends ArrayList implements VectorUtilities, RowUtilities 
 	 * within the schema
 	 * @param sch
 	 */
-	protected void setSchema(LinkedList<Class<?>> sch) {
+	protected void setSchema(Schema sch) {
 		if(sch.isEmpty())
 			return;
 		schema = sch;
@@ -224,8 +219,8 @@ public class DataRow extends ArrayList implements VectorUtilities, RowUtilities 
 		return name + " : " + super.toString();
 	}
 	
-	private final LinkedList<Class<? extends Object>> typeSafetyList() {
-		LinkedList<Class<? extends Object>> l = new LinkedList<Class<? extends Object>>();
+	private final Schema typeSafetyList() {
+		Schema l = new Schema();
 		for( int i = 0; i < super.size(); i++ ) {
 			Class<?> cl = MissingValue.isNA(super.get(i)) ? MissingValue.class : super.get(i).getClass();
 			l.add(cl);
