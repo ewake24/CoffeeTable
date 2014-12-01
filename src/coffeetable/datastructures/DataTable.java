@@ -51,20 +51,37 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 		options = Options.setOptions();
 	}
 	
+	/**
+	 * Instantiate an empty DataTable
+	 */
 	public DataTable() {
-		/* Init methods */
 		initFromDefault();
 	}
 	
+	/**
+	 * Instantiate an empty DataTable with a name
+	 * @param name
+	 */
 	public DataTable(String name) {
 		this();
 		setName(name);
 	}
 	
+	/**
+	 * Instantiate a DataTable and immediately populate it with
+	 * a collection of DataRows
+	 * @param rows
+	 */
 	public DataTable(Collection<DataRow> rows) {
 		this(rows, null);
 	}
 	
+	/**
+	 * Instantiate a named DataTable and immediately 
+	 * populate it with a collection of DataRows
+	 * @param rows
+	 * @param name
+	 */
 	public DataTable(Collection<DataRow> rows, String name) {
 		this(rows.size(), new ArrayList<DataRow>(rows).get(0).size(), name);
 		addAllRows(rows);
@@ -83,10 +100,23 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 				   this.setOptions("default.num.cols", cols) );
 	}
 	
+	/**
+	 * Instantiate an empty DataTable with pre-allocated dimensions.
+	 * This can save time on population if the dimensions are known beforehand
+	 * @param rows
+	 * @param cols
+	 */
 	public DataTable(int rows, int cols) {
 		this(rows,cols,null);
 	}
 	
+	/**
+	 * Instantiate an empty, named DataTable with pre-allocated dimensions.
+	 * This can save time on population if the dimensions are known beforehand
+	 * @param rows
+	 * @param cols
+	 * @param name
+	 */
 	public DataTable(int rows, int cols, String name) {
 		if(rows <= 0 || cols <= 0)
 			throw new IllegalArgumentException("Cannot instantiate DataTable of zero or negative dimensions");
@@ -291,16 +321,28 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 		else ContentFactory.addToExistingCols(this,row, true);
 	}
 	
+	/**
+	 * Add a collection of DataColumns to the DataTable
+	 * @param columns
+	 */
 	public void addAllColumns(Collection<DataColumn> columns) {
 		for(DataColumn col : columns)
 			this.addColumn(col);
 	}
 	
+	/**
+	 * Add a collection of DataRows to the DataTable
+	 * @param rows
+	 */
 	public void addAllRows(Collection<DataRow> rows) {
 		for(DataRow row : rows)
 			this.addRow(row);
 	}
 	
+	/**
+	 * Add a single DataRow to the DataTable
+	 * @param row
+	 */
 	public void addRow(DataRow row) {
 		ContentFactory.schemaAssignment(this,row);
 		if(!schemaIsSafe(row.schema()))
@@ -311,6 +353,11 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 		else ContentFactory.addToExistingCols(this,row,false);
 	}
 	
+	/**
+	 * Add a single DataRow to the DataTable at the specified index
+	 * @param index
+	 * @param row
+	 */
 	public void addRow(int index, DataRow row) {
 		if(rows.isEmpty() || null == schema || index==rows.size()) {
 			addRow(row); return;
@@ -322,6 +369,10 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 		ContentFactory.addToExistingColsAtIndex(this, row, false, index);
 	}
 	
+	/**
+	 * Add a single DataColumn to the DataTable
+	 * @param col
+	 */
 	public void addColumn(DataColumn<?> col) {
 		if(cols.isEmpty() || null==schema)
 			schema = updateSchemaFromNew(col.contentClass());
@@ -333,6 +384,11 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 		else ContentFactory.addToExistingRows(this, col);
 	}
 	
+	/**
+	 * Add a single DataColumn to the DataTable at the specified index
+	 * @param index
+	 * @param col
+	 */
 	public void addColumn(int index, DataColumn<?> col) {
 		if(cols.isEmpty() || null==schema || index==cols.size()) {
 			addColumn(col); return;
@@ -344,6 +400,9 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 		ContentFactory.addToExistingRowsAtIndex(this, col, index);
 	}
 	
+	/**
+	 * Clears all data from the DataTable, but retains the name
+	 */
 	public void clear() {
 		cols = new ArrayList<DataColumn>();
 		rows = new ArrayList<DataRow>();
@@ -356,6 +415,9 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 		return clone;
 	}
 	
+	/**
+	 * Returns true if the DataTable contains any NA values
+	 */
 	public boolean containsNA() {
 		if(cols.isEmpty())
 			return false;
@@ -366,6 +428,9 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 		return false;
 	}
 	
+	/**
+	 * Returns the number of MissingValues in the table
+	 */
 	public int countMissingValues() {
 		if(this.isEmpty())
 			return 0;
@@ -376,16 +441,30 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 		return sum;
 	}
 	
+	/**
+	 * Creates a numeric version of the column passed in
+	 * @param col
+	 * @return a numeric version of the column
+	 */
 	@SuppressWarnings("unchecked")
 	public static DataColumn<? extends Number> castColumnAsNumeric(DataColumn col) {
 		return (DataColumn<? extends Number>) col.asNumeric();
 	}
 	
+	/**
+	 * Casts the column to String
+	 * @param col
+	 * @return the passed in column in String version
+	 */
 	@SuppressWarnings("unchecked")
 	public static DataColumn<String> castColumnAsString(DataColumn col) {
 		return (DataColumn<String>) col.asCharacter();
 	}
 	
+	/**
+	 * Returns a collection of the DataTable's column names
+	 * @return collection of the DataTable's column names
+	 */
 	public Collection<String> columnNames() {
 		Collection<String> names = new LinkedList<String>();
 		for( DataColumn r : cols ) {
@@ -394,6 +473,10 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 		return names;
 	}
 	
+	/**
+	 * Returns a collection of the DataTable's columns
+	 * @return collection of the DataTable's columns
+	 */
 	public Collection<DataColumn> columns() {
 		return cols;
 	}
@@ -635,6 +718,10 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 					(bottom >= -1) && (top <= rows.size()) && (bottom < top) && (top-bottom>1); //Must be at least one between them
 	}
 	
+	/**
+	 * Returns whether the table is empty
+	 * @return false if the table contains data, true otherwise
+	 */
 	public boolean isEmpty() {
 		return cols.isEmpty() && rows.isEmpty();
 	}
@@ -648,6 +735,9 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 		exceptionLog.add(e);
 	}
 	
+	/**
+	 * Returns the name of the DataTable
+	 */
 	public String name() {
 		return tableName;
 	}
@@ -670,28 +760,56 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 		return csv.dataTable();
 	}
 	
+	/**
+	 * Return the number of columns in the table
+	 * @return number of cols in the table
+	 */
 	public int ncol() {
 		return cols.size();
 	}
 	
+	/**
+	 * Return the number of rows in the table
+	 * @return number of rows in the table
+	 */
 	public int nrow() {
 		return rows.size();
 	}
 	
+	/**
+	 * Render the DataTable in the console
+	 */
 	public void print() {
 		printHead(rows.size());
 	}
 	
+	/**
+	 * Print the first n rows of the DataTable where n
+	 * is defined by getOption("default.head")
+	 */
 	public void printHead() {
 		printHead( options.get("default.head") );
 	}
 	
+	/**
+	 * Print the first n rows of the DataTable where n
+	 * is defined by the parameter, rows
+	 * @param rows - the number of rows to render
+	 */
 	public void printHead(int rows) {
 		if(rows > this.rows.size())
 			rows = this.rows.size();
 		printTable(rows);
 	}
 	
+	/**
+	 * Determine the number of spaces to place between each item
+	 * @param colToWidth
+	 * @param content
+	 * @param col
+	 * @param whitespace
+	 * @return
+	 */
 	private final String printerHelper(TreeMap<Integer, Integer> colToWidth, String content, int col, int whitespace) {
 		int columnWidth = colToWidth.get(col);		//The widest point of this column
 		int desiredWidth= columnWidth + whitespace;	//The rendered size of this column
@@ -761,6 +879,11 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 		}
 	}
 	
+	/**
+	 * Remove the column at the specified index
+	 * @param arg0
+	 * @return the removed DataColumn
+	 */
 	public DataColumn removeColumn(int arg0) {
 		if( !(cols.size() > arg0) )
 			throw new NullPointerException();
@@ -776,6 +899,12 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 		return cols.remove(arg0);
 	}
 	
+	/**
+	 * Remove the columns between the lo and hi indices
+	 * @param lo - the index at which to begin removal
+	 * @param hi - the index at which to end removal
+	 * @param inclusive - whether the lo/hi params are inclusive
+	 */
 	public final void removeColumnRange(int lo, int hi, boolean inclusive) {
 		if(!inRange_col(lo,hi,inclusive))
 			throw new IllegalArgumentException("Out of range");
@@ -786,6 +915,11 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 		}
 	}
 	
+	/**
+	 * Remove the DataRow at the specified index
+	 * @param arg0
+	 * @return the removed DataRow
+	 */
 	public DataRow removeRow(int arg0) {
 		if( !(rows.size() > arg0) )
 			throw new NullPointerException();
@@ -800,6 +934,12 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 		return rows.remove(arg0);
 	}
 	
+	/**
+	 * Remove the rows between the lo and hi indices
+	 * @param lo - the index at which to begin removal
+	 * @param hi - the index at which to end removal
+	 * @param inclusive - whether the lo/hi params are inclusive
+	 */
 	public final void removeRowRange(int lo, int hi, boolean inclusive) {
 		if(!inRange_row(lo,hi,inclusive))
 			throw new IllegalArgumentException("Out of range");
@@ -810,6 +950,10 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 		}
 	}
 	
+	/**
+	 * Return a collection of all the row names
+	 * @return collection of the DataTable's row names
+	 */
 	public Collection<String> rowNames() {
 		Collection<String> names = new LinkedList<String>();
 		for( DataRow r : rows ) {
@@ -818,14 +962,24 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 		return names;
 	}
 	
+	/**
+	 * Return a collection of the DataTable's rows
+	 * @return collection of the DataTable's rows
+	 */
 	public Collection<DataRow> rows() {
 		return rows;
 	}
 	
+	/**
+	 * Return the DataTable's schema
+	 */
 	public LinkedList<Class<?>> schema() {
 		return schema;
 	}
 	
+	/**
+	 * Determine whether the schema is numeric
+	 */
 	public boolean schemaIsNumeric() {
 		if(null==schema)
 			return false;
@@ -864,6 +1018,14 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 		return true;
 	}
 	
+	/**
+	 * Set the respective column names given a List of Strings.
+	 * The method will throw an exception for a list longer than 
+	 * the number of columns, but will not fail if the provided
+	 * list is shorter than the number of columns; it will merely
+	 * not name the omitted columns
+	 * @param names
+	 */
 	public void setColNames(List<String> names) {
 		if(names.size() > cols.size())
 			throw new IllegalArgumentException();
@@ -875,6 +1037,10 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 		}
 	}
 	
+	/**
+	 * Set the name of the DataTable. Note: <tt>null</tt> or empty
+	 * Strings are not acceptable names
+	 */
 	public void setName(String name) {
 		tableName = (null == name || name.isEmpty()) ? "New Table" : name; 
 	}
@@ -894,6 +1060,14 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 		else return options.put(option, num);
 	}
 	
+	/**
+	 * Set the respective row names given a List of Strings.
+	 * The method will throw an exception for a list longer than 
+	 * the number of rows, but will not fail if the provided
+	 * list is shorter than the number of rows; it will merely
+	 * not name the omitted rows
+	 * @param names
+	 */
 	public void setRowNames(List<String> names) {
 		if(names.size() > rows.size())
 			throw new IllegalArgumentException();
