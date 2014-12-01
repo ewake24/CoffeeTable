@@ -464,37 +464,36 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 	}
 	
 	/**
-	 * Determine whether the dicing operation will be performed across all columns
+	 * Determine whether the dicing operation will cut any columns out
 	 * @param colStart
 	 * @param colEnd
 	 * @param inclusive
 	 * @return whether the subset is just removing rows
 	 */
-	private boolean diceWithAllColumns(int colStart, int colEnd, boolean inclusive) {
-		return (colStart==0 && colEnd==cols.size()-1 && inclusive);
+	private boolean diceWithAllColumns(int colStart, int colEnd) {
+		return (colStart==0 && colEnd==cols.size()-1);
 	}
 	
 	/**
-	 * Determine whether the dicing operation will be performed across all rows
+	 * Determine whether the dicing operation will cut any rows out
 	 * @param rowStart
 	 * @param rowEnd
 	 * @param inclusive
 	 * @return whether the subset is just removing columns
 	 */
-	private boolean diceWithAllRows(int rowStart, int rowEnd, boolean inclusive) {
-		return (rowStart==0 && rowEnd==rows.size()-1 && inclusive);
+	private boolean diceWithAllRows(int rowStart, int rowEnd) {
+		return (rowStart==0 && rowEnd==rows.size()-1);
 	}
 	
 	/**
 	 * Dices the DataTable into a subset
-	 * @param colStart
-	 * @param colEnd
-	 * @param rowStart
-	 * @param rowEnd
-	 * @param inclusive
+	 * @param rowStart - row from which to begin subset (inclusive)
+	 * @param rowEnd - row at which to end subset (inclusive)
+	 * @param colStart - col at which to begin subset (inclusive)
+	 * @param colEnd - col at which to end subset (inclusive)
 	 * @return a copy of the current instance of DataTable diced at the given boundaries
 	 */
-	public DataTable dice(int colStart, int colEnd, int rowStart, int rowEnd, boolean inclusive) {
+	public DataTable dice(int rowStart, int rowEnd, int colStart, int colEnd) {
 		DataTable newdata = new DataTable();
 		newdata.rows = rows;
 		newdata.cols = cols;
@@ -502,29 +501,30 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 		newdata.tableName = tableName;
 		newdata.options = options;
 		
-		boolean diceWithAllColumns = diceWithAllColumns(colStart, colEnd, inclusive);
-		boolean diceWithAllRows = diceWithAllRows(rowStart, rowEnd, inclusive);
+		boolean diceWithAllColumns = diceWithAllColumns(colStart, colEnd);
+		boolean diceWithAllRows = diceWithAllRows(rowStart, rowEnd);
 		
+		/* If there is nothing to cut out, just return DT */
 		if(diceWithAllColumns && diceWithAllRows)
-			return newdata;
+			return this;
 		
 		//Cut rows
 		if(!diceWithAllRows) {
 			if(!(rowStart == 0)) {
-				newdata.removeRowRange(0, rowStart - (inclusive?1:0), true);
-				newdata.removeRowRange((inclusive?1:0) + rowEnd-rowStart, newdata.nrow()-1, true);
+				newdata.removeRowRange(0, rowStart - 1, true);
+				newdata.removeRowRange(1 + rowEnd-rowStart, newdata.nrow()-1, true);
 			} else {
-				newdata.removeRowRange(rowEnd+(inclusive?1:0), newdata.nrow()-1, true);
+				newdata.removeRowRange(rowEnd+1, newdata.nrow()-1, true);
 			}
 		}
 		
 		//Cut cols
 		if(!diceWithAllColumns) {
 			if(!(colStart==0)) {
-				newdata.removeColumnRange(0, colStart-(inclusive?1:0), true);
-				newdata.removeColumnRange((inclusive?1:0) + colEnd-colStart, newdata.ncol()-1, true);
+				newdata.removeColumnRange(0, colStart-1, true);
+				newdata.removeColumnRange(1 + colEnd-colStart, newdata.ncol()-1, true);
 			} else {
-				newdata.removeColumnRange(colEnd+(inclusive?1:0), newdata.ncol()-1, inclusive);
+				newdata.removeColumnRange(colEnd+1, newdata.ncol()-1, true);
 			}
 		}
 		
@@ -626,13 +626,13 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 	}
 	
 	private final boolean inRange_col(int bottom, int top, boolean inclusive) {
-		return inclusive ? (bottom >= 0) && (top <= cols.size()-1) && (bottom < top) :
-					(bottom > -1) && (top <= cols.size()) && (bottom < top) && (top-bottom>1);
+		return inclusive ? (bottom >= 0) && (top <= cols.size()-1) && (bottom <= top) :
+					(bottom >= -1) && (top <= cols.size()) && (bottom < top) && (top-bottom>1); //Must be at least one between them
 	}
 	
 	private final boolean inRange_row(int bottom, int top, boolean inclusive) {
-		return inclusive ? (bottom >= 0) && (top <= rows.size()-1) && (bottom < top) :
-					(bottom > -1) && (top <= rows.size()) && (bottom < top) && (top-bottom>1);
+		return inclusive ? (bottom >= 0) && (top <= rows.size()-1) && (bottom <= top) :
+					(bottom >= -1) && (top <= rows.size()) && (bottom < top) && (top-bottom>1); //Must be at least one between them
 	}
 	
 	public boolean isEmpty() {
