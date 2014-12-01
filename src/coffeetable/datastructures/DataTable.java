@@ -978,13 +978,6 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 		return schema;
 	}
 	
-	/**
-	 * Determine whether the schema is numeric
-	 */
-	public boolean schemaIsNumeric() {
-		return schema.isNumeric();
-	}
-	
 	private final boolean schemaIsSafe(Schema sch) {
 		return schema.isSafe(sch);
 	}

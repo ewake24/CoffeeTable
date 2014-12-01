@@ -1,8 +1,7 @@
 package coffeetable.interfaces;
 
-import java.util.LinkedList;
+import coffeetable.datastructures.Schema;
 
 public interface RowUtilities {
-	public LinkedList<Class<?>> schema();
-	public boolean schemaIsNumeric();
+	public Schema schema();
 }

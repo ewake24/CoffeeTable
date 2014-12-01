@@ -168,7 +168,7 @@ public class DataRow extends ArrayList implements VectorUtilities, RowUtilities 
 		if(null==schema)
 			return true;
 		if(schema.get(index).equals(MissingValue.class) ^ MissingValue.isNA(element)) {
-			if(!MissingValue.isNA(element)) { //Schema has a Missing Value
+			if(!MissingValue.isNA(element)) { //Schema is the one that has a Missing Value
 				schema.set(index, element.getClass()); //Fix dat up
 			}
 			return true;
@@ -177,10 +177,6 @@ public class DataRow extends ArrayList implements VectorUtilities, RowUtilities 
 			return true;
 		}
 		return schema.get(index).equals(element.getClass());
-	}
-	
-	public boolean schemaIsNumeric() {
-		return schema.isNumeric();
 	}
 	
 	@SuppressWarnings("unchecked")
