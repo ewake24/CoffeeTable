@@ -3,3 +3,4 @@
 .project
 .settings
 *.class
+hs_err_pid*
