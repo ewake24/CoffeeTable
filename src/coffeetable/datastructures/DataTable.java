@@ -1163,7 +1163,7 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 	
 	/**
 	 * Writes a serialized DataTable object from this instance,
-	 * returns the path to which the object was saved
+	 * returns true if successful
 	 * @throws IOException
 	 * @param path - the path to which to write
 	 * @return true if the operation was successful
@@ -1204,12 +1204,26 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 	/**
 	 * Writes to a default HTML table. The HtmlTableWriter class provides support for
 	 * "fancy" writes that include class additions, but this method will write a default
-	 * table. For a fancy write, instantiate an instance of HtmlTableWriter.
+	 * table. For a fancy write, instantiate an instance of HtmlTableWriter and pass it
+	 * as an arg
 	 * @param file
 	 * @return true if successful
 	 */
 	public boolean writeToHtml(File file) {
-		HtmlTableWriter html = new HtmlTableWriter(this, file);
+		return writeToHtmlPrivate(new HtmlTableWriter(this,file));
+	}
+	
+	/**
+	 * Allows for "fancy" writes of an Html table with a custom HtmlTableWriter object
+	 * @param html
+	 * @return
+	 */
+	public boolean writeToHtml(HtmlTableWriter html) {
+		html.setTable(this); //Ensure this table will be written
+		return writeToHtmlPrivate(html);
+	}
+	
+	private boolean writeToHtmlPrivate(HtmlTableWriter html) {
 		try {
 			return html.write();
 		} catch (IOException e) {

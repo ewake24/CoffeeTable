@@ -1232,7 +1232,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	
 	/**
 	 * Writes a serialized DataColumn object from this instance,
-	 * returns the path to which the object was saved
+	 * returns true if successful
 	 * @throws IOException
 	 * @param path - the path to which to write
 	 * @return true if the operation was successful

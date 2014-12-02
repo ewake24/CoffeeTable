@@ -62,6 +62,10 @@ public class DataTableWriter {
 		this.file = file;
 	}
 	
+	public void setTable(DataTable dt) {
+		this.dt = dt;
+	}
+	
 	public boolean write() throws IOException {
 		FileWriter f = null;
 		try {

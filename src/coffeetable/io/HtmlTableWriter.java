@@ -51,7 +51,7 @@ public class HtmlTableWriter extends DataTableWriter {
 	public void setCaption(String arg0) {
 		caption = (null == arg0 || arg0.isEmpty()) ? super.dt().name() : arg0;
 	}
-	
+
 	public void setTableClass(String arg0) {
 		if(null == arg0 || arg0.isEmpty()) {
 			return;

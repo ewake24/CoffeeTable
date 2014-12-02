@@ -242,7 +242,7 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 	
 	/**
 	 * Writes a serialized DataRow object from this instance,
-	 * returns the path to which the object was saved
+	 * returns true if successful
 	 * @throws IOException
 	 * @param path - the path to which to write
 	 * @return true if the operation was successful
