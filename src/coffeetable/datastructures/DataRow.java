@@ -1,5 +1,11 @@
 package coffeetable.datastructures;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,10 +17,10 @@ import coffeetable.utils.SchemaMismatchException;
 
 
 @SuppressWarnings("rawtypes")
-public class DataRow extends ArrayList implements VectorUtilities, RowUtilities {
+public class DataRow extends ArrayList implements java.io.Serializable, VectorUtilities, RowUtilities {
 	private static final long serialVersionUID = 3148244157795837127L;
 	private String name;
-	private transient Schema schema = new Schema();
+	private Schema schema = new Schema();
 	
 	public DataRow(int initSize) {
 		super(initSize);
@@ -135,6 +141,15 @@ public class DataRow extends ArrayList implements VectorUtilities, RowUtilities 
 		System.out.println(this.toString());
 	}
 	
+	public final static DataRow readFromSerializedObject(FileInputStream fileIn) throws IOException, ClassNotFoundException {
+		DataRow d = null;
+		ObjectInputStream in = new ObjectInputStream(fileIn);
+		d = (DataRow) in.readObject();
+		in.close();
+		fileIn.close();
+		return d;
+	}
+	
 	/**
 	 * Removes the object from the DataColumn
 	 */
@@ -223,5 +238,27 @@ public class DataRow extends ArrayList implements VectorUtilities, RowUtilities 
 		}
 		schema = l;
 		return l;
+	}
+	
+	/**
+	 * Writes a serialized DataRow object from this instance,
+	 * returns the path to which the object was saved
+	 * @throws IOException
+	 * @param path - the path to which to write
+	 * @return true if the operation was successful
+	 */
+	public final boolean writeObject(String path) throws IOException {
+		if(null == path || path.isEmpty()) {
+			path = "/tmp/datarow.ser"; 
+			System.out.println("Path was empty, saving to "+path);
+		} else if(!path.endsWith(".ser"))
+			path += ".ser";
+			
+		FileOutputStream fileOut = new FileOutputStream(path);
+		ObjectOutputStream out = new ObjectOutputStream(fileOut);
+		out.writeObject(this);
+		out.close();
+		fileOut.close();
+		return new File(path).exists();
 	}
 }

@@ -1,6 +1,10 @@
 package coffeetable.datastructures;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -8,7 +12,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -24,34 +27,32 @@ import coffeetable.utils.SchemaMismatchException;
  * @author Taylor G Smith
  * @param <T>
  */
-public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> implements VectorUtilities<T> {
+public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> implements java.io.Serializable, VectorUtilities<T> {
 	private static final long serialVersionUID = 1872913776989418759L;
 	private final static int defaultSize = 15;
-	private final Comparator<T> comparator;
 	private String name;
 	
+	/* Declared transient/static with Object instead of T for serialization purposes */
+	private transient final static Comparator<Object> comparator = new Comparator<Object>() {
+		@Override
+		public int compare(Object s1, Object s2) {
+			return Integer.valueOf(s1.toString().length()).
+					compareTo(Integer.valueOf(s2.toString().length()));
+		}
+	};
+	
 	/*Caching fields for checks to avoid repeated searches and calculations*/
-	private transient boolean checkedForNumericism;
-	private transient boolean isNumeric;
-	private transient boolean checkedForConvertable;
-	private transient boolean isConvertable;
-	private transient boolean widthCalculated; //Cache, false for every update
+	private boolean checkedForNumericism;
+	private boolean isNumeric;
+	private boolean checkedForConvertable;
+	private boolean isConvertable;
+	private boolean widthCalculated; //Cache, false for every update
 	private int width;
 	private Class<?> type;
 	private Class<?> conversionType;
 	
 	private boolean checkedForNAs;
 	private boolean containsNAs;
-	
-	{
-		comparator = new Comparator<T>() {
-			@Override
-			public int compare(T s1, T s2) {
-				return Integer.valueOf(s1.toString().length()).
-						compareTo(Integer.valueOf(s2.toString().length()));
-			}
-		};
-	}
 	
 	public DataColumn(int initSize) {
 		super(initSize);
@@ -1058,6 +1059,16 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		return ArithmeticOperations.range(this);
 	}
 	
+	@SuppressWarnings("rawtypes")
+	public final static DataColumn readFromSerializedObject(FileInputStream fileIn) throws IOException, ClassNotFoundException {
+		DataColumn d = null;
+		ObjectInputStream in = new ObjectInputStream(fileIn);
+		d = (DataColumn) in.readObject();
+		in.close();
+		fileIn.close();
+		return d;
+	}
+	
 	@SuppressWarnings("unchecked")
 	public DataColumn<Double> scaleByFactor(double scalar) {
 		return ArithmeticOperations.scaleByFactor(this,scalar);
@@ -1220,16 +1231,24 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	}
 	
 	/**
-	 * Will write the DataColumn to an ObjectOutputStream
-	 * @param s
+	 * Writes a serialized DataColumn object from this instance,
+	 * returns the path to which the object was saved
 	 * @throws IOException
+	 * @param path - the path to which to write
+	 * @return true if the operation was successful
 	 */
-	private void writeObject(ObjectOutputStream s) throws IOException {
-		s.defaultWriteObject();
-		s.writeInt(this.size());
-		for(Iterator<T> i = super.iterator(); i.hasNext();) {
-			T e = i.next();
-			s.writeObject(e);
-		}
+	public final boolean writeObject(String path) throws IOException {
+		if(null == path || path.isEmpty()) {
+			path = "/tmp/datacolumn.ser"; 
+			System.out.println("Path was empty, saving to "+path);
+		} else if(!path.endsWith(".ser"))
+			path += ".ser";
+			
+		FileOutputStream fileOut = new FileOutputStream(path);
+		ObjectOutputStream out = new ObjectOutputStream(fileOut);
+		out.writeObject(this);
+		out.close();
+		fileOut.close();
+		return new File(path).exists();
 	}
 }

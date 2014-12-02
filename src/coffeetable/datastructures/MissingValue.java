@@ -1,5 +1,7 @@
 package coffeetable.datastructures;
 
+import java.io.Serializable;
+
 /**
  * To be used in conjunction with DataTable in place of a <tt>null</tt> value.
  * MissingValue is a comparable class (both in its use as a null value as well as its
@@ -9,7 +11,7 @@ package coffeetable.datastructures;
  * @author Taylor G Smith
  * @see Number
  */
-public class MissingValue extends Number implements Comparable<Number> {
+public class MissingValue extends Number implements Comparable<Number>, Serializable {
 	private static final long serialVersionUID = 8685839276702330957L;
 	private static Integer value = Integer.MIN_VALUE;
 	private static int sortOrder = -1;

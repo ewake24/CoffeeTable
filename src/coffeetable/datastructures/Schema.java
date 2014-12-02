@@ -1,5 +1,6 @@
 package coffeetable.datastructures;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.LinkedList;
 
@@ -10,7 +11,7 @@ import java.util.LinkedList;
  * @author Taylor G Smith
  */
 @SuppressWarnings("rawtypes")
-public class Schema extends LinkedList<Class<?>> {
+public class Schema extends LinkedList<Class<?>> implements Serializable {
 	private static final long serialVersionUID = -2991576118127902417L;
 	
 	public Schema() {
