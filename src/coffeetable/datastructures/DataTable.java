@@ -1215,8 +1215,8 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 	
 	/**
 	 * Allows for "fancy" writes of an Html table with a custom HtmlTableWriter object
-	 * @param html
-	 * @return
+	 * @param html - HtmlTableWriter object
+	 * @return true if successful
 	 */
 	public boolean writeToHtml(HtmlTableWriter html) {
 		html.setTable(this); //Ensure this table will be written
