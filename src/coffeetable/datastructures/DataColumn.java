@@ -316,6 +316,22 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 			return max(col) - min(col);
 		}
 		
+		@SuppressWarnings("unchecked")
+		public static DataColumn scaleByFactor(DataColumn col, double scalar) {
+			col = exceptionHandling(col);
+			
+			DataColumn newD = new DataColumn(col.size());
+			newD.checkedForConvertable = true;
+			newD.isNumeric = true;
+			
+			for(Object s : col) {
+				if(MissingValue.isNA(s)) {
+					newD.add(new MissingValue());
+				} else newD.add( Double.valueOf((String)s)*scalar );
+			}
+			return newD;
+		}
+		
 		/**
 		 * Calculate the standard deviation of a column
 		 * @param col
@@ -1040,6 +1056,11 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	
 	public double range() {
 		return ArithmeticOperations.range(this);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public DataColumn<Double> scaleByFactor(double scalar) {
+		return ArithmeticOperations.scaleByFactor(this,scalar);
 	}
 
 	/**

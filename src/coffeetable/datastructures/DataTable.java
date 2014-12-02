@@ -983,6 +983,36 @@ public class DataTable implements Serializable, Cloneable, VectorUtilities, RowU
 	}
 	
 	/**
+	 * Replace a datacolumn at a given index
+	 * @param index
+	 * @param newCol
+	 * @return the removed/old column at the specified index
+	 */
+	public DataColumn setColumn(int index, DataColumn newCol) {
+		if(newCol.isEmpty() || newCol.size() != this.nrow())
+			throw new DimensionMismatchException();
+		
+		DataColumn old = this.removeColumn(index);
+		this.addColumn(index, newCol);
+		return old;
+	}
+	
+	/**
+	 * Replace a datarow at a given index
+	 * @param index
+	 * @param newRow
+	 * @return the removed/old row from the specified index
+	 */
+	public DataRow setRow(int index, DataRow newRow) {
+		if(newRow.isEmpty() || newRow.size() != this.ncol())
+			throw new DimensionMismatchException();
+		
+		DataRow old = this.removeRow(index);
+		this.addRow(index, newRow);
+		return old;
+	}
+	
+	/**
 	 * Set the respective column names given a List of Strings.
 	 * The method will throw an exception for a list longer than 
 	 * the number of columns, but will not fail if the provided
