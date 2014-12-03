@@ -1112,6 +1112,33 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 	}
 	
 	/**
+	 * Will subset the datatable according to rows in a column that correspond
+	 * to a given SubsettableCondition
+	 * @param eval
+	 * @param sub
+	 * @return
+	 */
+	public DataTable subsetByCondition(DataColumn eval, SubsettableCondition sub) {
+		if(!cols.contains(eval))
+			throw new IllegalArgumentException("Specified column not found in table");
+		boolean[] keeps = sub.evaluate(eval);
+		
+		DataTable dt = new DataTable(rows);
+		dt.tableName = this.name() + " subset";
+		dt.options = this.options;
+		dt.setColNames(new ArrayList<String>(this.columnNames()));
+		dt.setRowNames(new ArrayList<String>(this.rowNames()));
+		
+		int j = 0;
+		for(int i = 0; i < rows.size(); i++) {
+			if(!keeps[i])
+				dt.removeRow(j);
+			else j++;
+		}
+		return dt;
+	}
+	
+	/**
 	 * Matrix-transform the DataTable
 	 */
 	public void transform() {
