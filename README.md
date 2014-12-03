@@ -7,6 +7,8 @@ This library provides a data structure class (DataTable) similar to that of the 
 
 By nature, a DataTable’s columns are type safe, while its rows allow wildcard adds. However, a special class, MissingValue (similar to C# DBNull), will replace empty fields or NA fields, allow for easy arithmetic functions while avoiding NullPointerExceptions, and otherwise stay out of the way of your operations.
 
+*The documentation for this library is provided in a JavaDoc included in this Git*
+
 This library was built and tested in Java SE 1.6
 
 For bug reports, future implementation ideas or general commentary, please email me at tgsmith61591@gmail.com
