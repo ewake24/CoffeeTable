@@ -1116,7 +1116,7 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 	 * to a given SubsettableCondition
 	 * @param eval
 	 * @param sub
-	 * @return
+	 * @return a subset DataTable that meets the conditions in the SubsettableCondition class
 	 */
 	public DataTable subsetByCondition(DataColumn eval, SubsettableCondition sub) {
 		if(!cols.contains(eval))
