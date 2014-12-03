@@ -2,6 +2,8 @@ package coffeetable.datastructures;
 
 import java.util.Comparator;
 
+import coffeetable.utils.MissingValueException;
+
 /**
  * A class used to define a condition by which a DataTable's rows will
  * be subset. NOTE: a condition can not be predicated on the MissingValue
@@ -32,6 +34,8 @@ public class SubsettableCondition {
 		public Builder(Evaluator evaluator, Object value) {
 			this.evaluator = evaluator;
 			this.value = value;
+			if(MissingValue.isNA(value))
+				throw new MissingValueException("Cannot subset by assessing MissingValue equivalency");
 		}
 		
 		public Builder negate() {
@@ -57,18 +61,6 @@ public class SubsettableCondition {
 		//Else it's greater than...
 		
 		this.removeNA = builder.removeNA;
-		
-		/*
-		int trueCount = (equals ? 1 : 0)
-				+ (lessThan ? 1 : 0)
-				+ (greaterThan ? 1 : 0);
-		
-		if(trueCount != 1) //Check for people who assign more than one eval
-			throw new IllegalArgumentException("Condition must have exactly ONE " +
-												"evaluator (either equals, greaterthan " +
-												"OR lessthan)");
-		 */
-		
 		this.comparator = setComparator();
 	}
 	
@@ -82,10 +74,10 @@ public class SubsettableCondition {
 		return new Comparator<Comparable>() {
 			@SuppressWarnings("unchecked")
 			public int compare(Comparable s1, Comparable s2) {
-				if( MissingValue.isNA(s1) && removeNA )
+				/*if( MissingValue.isNA(s1) && removeNA )
 					return 2; //Always will evaluate to false
 				else if( MissingValue.isNA(s1) ) //Implicit: && !removeNA
-					return equals ? 0 : lessThan ? -1 : 1;
+					return equals ? 0 : lessThan ? -1 : 1;*/
 					
 				return s1.compareTo(s2);
 			};
@@ -105,11 +97,18 @@ public class SubsettableCondition {
 		
 		int index = 0;
 		for(Object o : col) {
+			if(MissingValue.isNA(o)) {
+				boolean pass = false;
+				if(!removeNA)
+					pass = true;
+				bool[index++] = pass;
+				continue;
+			}
 			int compare = comparator.compare((Comparable) o, (Comparable) value);
-			if(removeNA && compare==2 && negate)
+			/*if(removeNA && compare==2 && negate) //if(removeNA && MissingValue.isNA(o))
 				bool[index++] = false;
-			else
-				bool[index++] = !negate ? compare == comp : compare != comp; //Non-negate:Negate
+			else*/
+			bool[index++] = !negate ? compare == comp : compare != comp; //Non-negate:Negate
 		}
 		return bool;
 	}
