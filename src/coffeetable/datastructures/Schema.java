@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+import coffeetable.math.MissingValue;
+
 
 /**
  * A object that defines the "schema" of the DataRow, supports
@@ -15,7 +17,7 @@ public class Schema extends LinkedList<Class<?>> implements Serializable {
 	private static final long serialVersionUID = -2991576118127902417L;
 	
 	public Schema() {
-		/* Init if any */
+		super();
 	}
 	
 	public Schema(LinkedList<Class<?>> schema) {

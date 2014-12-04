@@ -62,10 +62,19 @@ public class DataTableWriter {
 		this.file = file;
 	}
 	
+	/**
+	 * Reset which DataTable should be written
+	 * @param dt
+	 */
 	public void setTable(DataTable dt) {
 		this.dt = dt;
 	}
 	
+	/**
+	 * Write the DataTable to a file
+	 * @return true if successful
+	 * @throws IOException
+	 */
 	public boolean write() throws IOException {
 		FileWriter f = null;
 		try {

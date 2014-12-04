@@ -16,6 +16,9 @@ import java.util.List;
 import java.util.Map;
 
 import coffeetable.interfaces.VectorUtilities;
+import coffeetable.math.Infinite;
+import coffeetable.math.MissingValue;
+import coffeetable.math.TheoreticalValue;
 import coffeetable.utils.MissingValueException;
 import coffeetable.utils.SchemaMismatchException;
 
@@ -198,7 +201,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		
 		private static DataColumn filterMissing(DataColumn col) {
 			for(int i = 0; i < col.size(); i++) {
-				if(MissingValue.isNA((col.get(i))))
+				if(TheoreticalValue.isTheoretical((col.get(i))))
 					col.remove(i--); //Subtract to move back and reassess new position
 			}
 			return col;
@@ -232,10 +235,10 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		public static double max(DataColumn col) {
 			col = exceptionHandling(col);
 			
-			if(col.contains("NA")) //MISSING VAL
+			if(col.contains("NA") || col.contains("Infinity") || col.contains("-Infinity")) //MISSING VAL
 				col = filterMissing(col);
 			if(col.isEmpty())
-				throw new MissingValueException("Cannot perform arithmetic operation on all-NA row");
+				throw new MissingValueException("Cannot perform arithmetic operation on entirely theoretical row");
 			
 			Collections.sort(col, compar);
 			return Double.valueOf((String)col.get(col.size()-1));
@@ -278,8 +281,8 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 				
 			Collections.sort(col, compar);
 			int comp = 0;
-			if(col.get(0).getClass().equals(MissingValue.class)) {
-				while( !(col.get(++comp).getClass().equals(MissingValue.class)) )
+			if(TheoreticalValue.isTheoretical(col.get(0))) {
+				while( !(TheoreticalValue.isTheoretical(col.get(++comp))) )
 					continue;
 			}
 			return Double.valueOf((String)col.get(comp));
@@ -326,9 +329,11 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 			newD.isNumeric = true;
 			
 			for(Object s : col) {
-				if(MissingValue.isNA(s)) {
+				if(MissingValue.isNA(s))
 					newD.add(new MissingValue());
-				} else newD.add( Double.valueOf((String)s)*scalar );
+				else if(Infinite.isInfinite(s))
+					newD.add(new Infinite(s.toString()));
+				else newD.add( Double.valueOf((String)s)*scalar );
 			}
 			return newD;
 		}
@@ -553,6 +558,8 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 			String tar = contentClass().equals(String.class) ? (String) t : t.toString();
 			if(MissingValue.isNA(tar))
 				collection.add(new MissingValue());
+			else if(Infinite.isInfinite(tar))
+				collection.add(new Infinite(tar));
 			else collection.add( new Double(tar) );
 		}
 		DataColumn<Double> returnable = new DataColumn<Double>(collection);
@@ -575,6 +582,8 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 			String tar = contentClass().equals(String.class) ? (String) t : t.toString();
 			if(MissingValue.isNA(tar))
 				collection.add(new MissingValue());
+			else if(Infinite.isInfinite(tar))
+				collection.add(new Infinite(tar));
 			else collection.add( new Integer(tar) );
 		}
 		DataColumn<Integer> returnable = new DataColumn<Integer>(collection);
@@ -589,7 +598,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * @return a numerically-converted DataColumn
 	 */
 	@SuppressWarnings({ "unchecked" })
-	protected final DataColumn<? extends Number> asNumeric() {
+	public final DataColumn<? extends Number> asNumeric() {
 		if(isNumeric())
 			return (DataColumn<? extends Number>) this;
 		else if(isConvertableToNumeric()) {
@@ -697,6 +706,10 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		checkedForNAs = false;
 	}
 	
+	/**
+	 * Will return whether the column contains
+	 * ANY theoretical values (NA, Infinite or NaN)
+	 */
 	public boolean containsNA() {
 		if(containsNAs)
 			return true;
@@ -707,7 +720,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		
 		checkedForNAs = true;
 		for(T t : this) {
-			if(MissingValue.isNA(t))
+			if(TheoreticalValue.isTheoretical(t))
 				return ( containsNAs = true);
 		}
 		return false;
@@ -724,7 +737,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 			return null;
 		else {
 			for(T t : this) {
-				if(!t.getClass().equals(MissingValue.class))
+				if(!TheoreticalValue.isTheoretical(t))
 					return (type = t.getClass()); //Legal?
 				else continue;
 			}
@@ -732,6 +745,10 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		return type;
 	}
 	
+	/**
+	 * Will count the number of theoretical values (NA, Infinite, NaN)
+	 * within the column
+	 */
 	public int countMissingValues() {
 		if(this.isEmpty())
 			return 0;
@@ -739,7 +756,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 			return 0;
 		int sum = 0;
 		for(T t : this) {
-			if(MissingValue.isNA(t))
+			if(TheoreticalValue.isTheoretical(t))
 				sum += 1;
 		}
 		return sum;
@@ -757,10 +774,10 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		if(this.isEmpty()) {
 			type = element.getClass();
 			return true;
-		} else if( MissingValue.isNA(element) ) {
+		} else if( TheoreticalValue.isTheoretical(element) ) {
 			containsNAs = true;
 			return true;
-		} else if( null==contentClass() || contentClass().equals(MissingValue.class) ) {
+		} else if( null==contentClass() || TheoreticalValue.class.isAssignableFrom(contentClass()) ) {
 			type = element.getClass();
 			return true;
 		} else return element.getClass().equals(this.contentClass());
@@ -782,7 +799,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 			HashSet<Class<?>> classes = new HashSet<Class<?>>();
 			Class<?> tmp = null;
 			for(Object e : element) {
-				if(MissingValue.isNA(e)) {
+				if(TheoreticalValue.isTheoretical(e)) {
 					containsNAs = true;
 					continue;
 				}
@@ -937,7 +954,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 					conversionType = Integer.class;
 				} else if( possibleDouble && numberCouldBeDouble(ts) ) {
 					return (conversionType = Double.class); 	//Hierarchical. If double, automatically return double
-				} else if(!MissingValue.isNA(t)) return null; 	//Skip out early if it isnt int, double or NA
+				} else if(!TheoreticalValue.isTheoretical(t)) return null; 	//Skip out early if it isnt int, double, NA, inf, etc
 			}
 			return conversionType;
 		}
@@ -945,15 +962,10 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	
 	private final boolean numberCouldBeInteger(String ts) {
 		return ts.matches("-?[0-9]+"); // << Should handle everything
-				//|| ts.matches("-?\\d+");
 	}
 	
 	private final boolean numberCouldBeDouble(String ts) {
-		return ts.matches("-?\\d|\\.+(\\d+)?+[eE][-+]?\\d"); // < Most comprehensive pattern
-				//|| ts.matches("-?\\d+(\\.\\d+)?")
-				//^^ Orig = "-?\\d+(\\.\\d+)?+[eE][-+]?\\d"
-				//|| ts.matches("-?\\.+(\\d+)?") 
-				//|| ts.matches("-?\\.+(\\.\\d+)?+[eE][-+]?\\d");
+		return ts.matches("-?\\d|\\.+(\\d+)?+[eE][-+]?\\d");
 	}
 	
 	/**
@@ -1044,11 +1056,24 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		return new Comparator<Map.Entry<T,Integer>>() {
 			@Override
 			public int compare(Map.Entry<T,Integer> s1, Map.Entry<T,Integer> s2) {
-				if(MissingValue.isNA(s1.getKey()) ^ MissingValue.isNA(s2.getKey()))
-					return MissingValue.isNA(s1.getKey()) ? -1 : 1;
-				
-				if(MissingValue.isNA(s1.getKey()) && MissingValue.isNA(s2.getKey()))
-					return 0;
+				/* Are either theoretical? */
+				if( TheoreticalValue.isTheoretical(s1.getKey()) || TheoreticalValue.isTheoretical(s2.getKey()) ) {
+					/* Missing Val checks */
+					if(MissingValue.isNA(s1.getKey()) ^ MissingValue.isNA(s2.getKey()))
+						return MissingValue.isNA(s1.getKey()) ? -1 : 1;
+					if(MissingValue.isNA(s1.getKey()) && MissingValue.isNA(s2.getKey()))
+						return 0;
+					
+					if(Infinite.isInfinite(s1.getKey()) ^ Infinite.isInfinite(s2.getKey())) {	//Only one inf
+						if(Infinite.isInfinite(s1.getKey()))									//The first is inf
+							return new Infinite(s1.getKey().toString()).sortOrder();			//What's its sort order?
+						/* The first is not infinite, but the second is. Return the first's
+						 * position in relation to the second's sort order (-1 * val) */
+						return new Infinite(s1.getKey().toString()).sortOrder() * -1;
+					} else if(Infinite.isInfinite(s1.getKey()) && Infinite.isInfinite(s2.getKey()))
+						return Integer.valueOf(new Infinite(s1.getKey().toString()).sortOrder())
+								.compareTo( Integer.valueOf(new Infinite(s2.getKey().toString()).sortOrder()) );
+				}
 				
 				return s1.getKey().compareTo(s2.getKey());
 			}
@@ -1139,6 +1164,16 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 				
 				if(MissingValue.isNA(s1) && MissingValue.isNA(s2))
 					return 0;
+				
+				if(Infinite.isInfinite(s1) ^ Infinite.isInfinite(s2)) {	//Only one inf
+					if(Infinite.isInfinite(s1))									//The first is inf
+						return new Infinite(s1.toString()).sortOrder();			//What's its sort order?
+					/* The first is not infinite, but the second is. Return the first's
+					 * position in relation to the second's sort order (-1 * val) */
+					return new Infinite(s1.toString()).sortOrder() * -1;
+				} else if(Infinite.isInfinite(s1) && Infinite.isInfinite(s2))
+					return Integer.valueOf(new Infinite(s1.toString()).sortOrder())
+							.compareTo( Integer.valueOf(new Infinite(s2.toString()).sortOrder()) );
 				
 				return s1.compareTo(s2);
 			}

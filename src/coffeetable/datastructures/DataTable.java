@@ -23,7 +23,8 @@ import coffeetable.io.DataTableWriter;
 import coffeetable.io.HtmlTableWriter;
 import coffeetable.utils.DimensionMismatchException;
 import coffeetable.utils.SchemaMismatchException;
-
+import coffeetable.math.MissingValue;
+import coffeetable.math.Infinite;
 
 /**
  * A collection of DataColumns and DataRows. This data structure
@@ -38,7 +39,9 @@ import coffeetable.utils.SchemaMismatchException;
  * @see DataColumn
  * @see DataRow
  * @see MissingValue
+ * @see Infinite
  */
+//TODO: MissingVal in DataRow schema gets updated by column type
 @SuppressWarnings("rawtypes")
 public class DataTable implements java.io.Serializable, Cloneable, VectorUtilities, RowUtilities {
 	private static final long serialVersionUID = -246560507184440061L;
@@ -190,7 +193,10 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 	}
 	
 	/**
-	 * Private inner class to handle all datatable sorts
+	 * Private inner class to handle all datatable sorts by calling protected
+	 * methods inside of DataColumn class. Works by sorting the defined column,
+	 * receiving a Collection of Map.Entries of record : index, and the sorted order,
+	 * then reinserting the rows in the sorted order
 	 * @author Taylor G Smith
 	 */
 	final static class TableRowSorter {
@@ -242,7 +248,7 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 	}
 	
 	/**
-	 * Inner class for the cleaner management of content -- adds, removals, etc.
+	 * Inner class for the cleaner management of content -- adds, schema assignments, etc.
 	 * @author Taylor G Smith
 	 */
 	@SuppressWarnings("unchecked")
@@ -494,9 +500,10 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 	 */
 	public void convertColumnToNumeric(DataColumn col) {
 		DataColumn<? extends Number> target = castColumnAsNumeric(col);
-		int colInd = indexOf(col);
+		this.setColumn(indexOf(col), target);
+		/*int colInd = indexOf(col);
 		this.removeColumn(colInd);
-		this.addColumn(colInd, target);
+		this.addColumn(colInd, target);*/
 	}
 	
 	/**
@@ -507,9 +514,10 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 	 */
 	public void convertColumnToString(DataColumn col) {
 		DataColumn<String> target = castColumnAsString(col);
-		int colInd = indexOf(col);
+		this.setColumn(indexOf(col), target);
+		/*int colInd = indexOf(col);
 		this.removeColumn(colInd);
-		this.addColumn(colInd, target);
+		this.addColumn(colInd, target);*/
 	}
 	
 	/**
@@ -1123,8 +1131,7 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 			throw new IllegalArgumentException("Specified column not found in table");
 		boolean[] keeps = sub.evaluate(eval);
 		
-		DataTable dt = new DataTable(rows);
-		dt.tableName = this.name() + " subset";
+		DataTable dt = new DataTable(rows,this.tableName+" subset");
 		dt.options = this.options;
 		dt.setColNames(new ArrayList<String>(this.columnNames()));
 		dt.setRowNames(new ArrayList<String>(this.rowNames()));
@@ -1133,7 +1140,7 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 		for(int i = 0; i < rows.size(); i++) {
 			if(!keeps[i])
 				dt.removeRow(j);
-			else j++;
+			else j++; //Only increments if true
 		}
 		return dt;
 	}
@@ -1209,7 +1216,9 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 		fileOut.close();
 		return new File(path).exists();
 	}
+
 	
+	/* ---------- Table writing operations ---------- */
 	/**
 	 * Writes a delimited file (.csv, .txt, etc.)
 	 * @param file

@@ -13,6 +13,9 @@ import java.util.HashSet;
 
 import coffeetable.interfaces.RowUtilities;
 import coffeetable.interfaces.VectorUtilities;
+import coffeetable.math.Infinite;
+import coffeetable.math.MissingValue;
+import coffeetable.math.TheoreticalValue;
 import coffeetable.utils.SchemaMismatchException;
 
 
@@ -85,7 +88,7 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 		if(this.isEmpty())
 			return false;
 		for(Object t : this) {
-			if(MissingValue.isNA(t))
+			if(TheoreticalValue.isTheoretical(t))
 				return true;
 		}
 		return false;
@@ -96,7 +99,7 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 			return 0;
 		int sum = 0;
 		for(Object t : this) {
-			if(MissingValue.isNA(t))
+			if(TheoreticalValue.isTheoretical(t))
 				sum += 1;
 		}
 		return sum;
@@ -130,7 +133,14 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 	@SuppressWarnings("unchecked")
 	private final boolean isSameClass() {
 		HashSet<Class> sdf = new HashSet(typeSafetyList());
-		return (sdf.size()==1) || (sdf.size()==2 && sdf.contains(MissingValue.class));
+		if(sdf.size() ==1 )
+			return true;
+		if(sdf.contains(MissingValue.class))
+			sdf.remove(MissingValue.class);
+		if(sdf.contains(Infinite.class))
+			sdf.remove(Infinite.class);
+		
+		return (sdf.size()==1); //|| (sdf.size()==2 && sdf.contains(MissingValue.class));
 	}
 	
 	public String name() {
@@ -182,13 +192,13 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 	private boolean schemaCheck(Object element, int index) {
 		if(null==schema)
 			return true;
-		if(schema.get(index).equals(MissingValue.class) ^ MissingValue.isNA(element)) {
-			if(!MissingValue.isNA(element)) { //Schema is the one that has a Missing Value
+		if(TheoreticalValue.class.isAssignableFrom(schema.get(index)) ^ TheoreticalValue.isTheoretical(element)) {
+			if(!TheoreticalValue.isTheoretical(element)) { //Schema is the one that has a Missing Value
 				schema.set(index, element.getClass()); //Fix dat up
 			}
 			return true;
 		}
-		if(schema.get(index).equals(MissingValue.class) && MissingValue.isNA(element)) {
+		if(TheoreticalValue.class.isAssignableFrom(schema.get(index)) && TheoreticalValue.isTheoretical(element)) {
 			return true;
 		}
 		return schema.get(index).equals(element.getClass());
@@ -233,7 +243,10 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 	private final Schema typeSafetyList() {
 		Schema l = new Schema();
 		for( int i = 0; i < super.size(); i++ ) {
-			Class<?> cl = MissingValue.isNA(super.get(i)) ? MissingValue.class : super.get(i).getClass();
+			Class<?> cl = TheoreticalValue.isTheoretical(super.get(i)) ? 
+					(MissingValue.isNA(super.get(i)) ? MissingValue.class : Infinite.class) 
+					//TODO: ADD NaN WHEN CLASS DONE
+					: super.get(i).getClass();
 			l.add(cl);
 		}
 		schema = l;

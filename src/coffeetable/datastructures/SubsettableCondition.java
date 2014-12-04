@@ -2,6 +2,8 @@ package coffeetable.datastructures;
 
 import java.util.Comparator;
 
+import coffeetable.math.MissingValue;
+import coffeetable.math.TheoreticalValue;
 import coffeetable.utils.MissingValueException;
 
 /**
@@ -74,11 +76,6 @@ public class SubsettableCondition {
 		return new Comparator<Comparable>() {
 			@SuppressWarnings("unchecked")
 			public int compare(Comparable s1, Comparable s2) {
-				/*if( MissingValue.isNA(s1) && removeNA )
-					return 2; //Always will evaluate to false
-				else if( MissingValue.isNA(s1) ) //Implicit: && !removeNA
-					return equals ? 0 : lessThan ? -1 : 1;*/
-					
 				return s1.compareTo(s2);
 			};
 		};
@@ -97,7 +94,7 @@ public class SubsettableCondition {
 		
 		int index = 0;
 		for(Object o : col) {
-			if(MissingValue.isNA(o)) {
+			if(TheoreticalValue.isTheoretical(o)) {
 				boolean pass = false;
 				if(!removeNA)
 					pass = true;
@@ -105,9 +102,6 @@ public class SubsettableCondition {
 				continue;
 			}
 			int compare = comparator.compare((Comparable) o, (Comparable) value);
-			/*if(removeNA && compare==2 && negate) //if(removeNA && MissingValue.isNA(o))
-				bool[index++] = false;
-			else*/
 			bool[index++] = !negate ? compare == comp : compare != comp; //Non-negate:Negate
 		}
 		return bool;
