@@ -41,7 +41,6 @@ import coffeetable.math.Infinite;
  * @see MissingValue
  * @see Infinite
  */
-//TODO: MissingVal in DataRow schema gets updated by column type
 @SuppressWarnings("rawtypes")
 public class DataTable implements java.io.Serializable, Cloneable, VectorUtilities, RowUtilities {
 	private static final long serialVersionUID = -246560507184440061L;
@@ -51,6 +50,7 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 	private Schema schema;
 	private ArrayList<Exception> exceptionLog;
 	private HashMap<String, Integer> options;
+	private boolean isRendered; //cache rendering operations
 	
 	{
 		schema = null;
@@ -354,6 +354,7 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 	 * @param row
 	 */
 	public void addRow(DataRow row) {
+		tableUpdate();
 		ContentFactory.schemaAssignment(this,row);
 		if(!schemaIsSafe(row.schema()))
 			throw new SchemaMismatchException("Row schemas do not match");
@@ -369,6 +370,7 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 	 * @param row
 	 */
 	public void addRow(int index, DataRow row) {
+		tableUpdate();
 		if(rows.isEmpty() || null == schema || index==rows.size()) {
 			addRow(row); return;
 		} else if(index > rows.size())
@@ -384,6 +386,7 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 	 * @param col
 	 */
 	public void addColumn(DataColumn<?> col) {
+		tableUpdate();
 		if(cols.isEmpty() || null==schema)
 			schema = updateSchemaFromNew(col.contentClass());
 		else 
@@ -400,6 +403,7 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 	 * @param col
 	 */
 	public void addColumn(int index, DataColumn<?> col) {
+		tableUpdate();
 		if(cols.isEmpty() || null==schema || index==cols.size()) {
 			addColumn(col); return;
 		} else if(index > cols.size()) {
@@ -414,6 +418,7 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 	 * Clears all data from the DataTable, but retains the name
 	 */
 	public void clear() {
+		tableUpdate();
 		cols = new ArrayList<DataColumn>();
 		rows = new ArrayList<DataRow>();
 		schema = null;
@@ -501,9 +506,6 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 	public void convertColumnToNumeric(DataColumn col) {
 		DataColumn<? extends Number> target = castColumnAsNumeric(col);
 		this.setColumn(indexOf(col), target);
-		/*int colInd = indexOf(col);
-		this.removeColumn(colInd);
-		this.addColumn(colInd, target);*/
 	}
 	
 	/**
@@ -515,9 +517,6 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 	public void convertColumnToString(DataColumn col) {
 		DataColumn<String> target = castColumnAsString(col);
 		this.setColumn(indexOf(col), target);
-		/*int colInd = indexOf(col);
-		this.removeColumn(colInd);
-		this.addColumn(colInd, target);*/
 	}
 	
 	/**
@@ -757,17 +756,22 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 	/**
 	 * Will parse a file to an instance DataTable. The CsvParser will detect
 	 * numeric types if told to, but this operation may take slightly longer.
+	 * 
 	 * @param file
 	 * @param delimiter
 	 * @param headers
-	 * @param detectNumeric
+	 * @param detectNumeric - whether to autodetect column types. If false, will return string
+	 * @param renderstate - whether to correct NAs in row schemas with overall table schema (low-impact op; recommended)
 	 * @return a new instance of DataTable
 	 * @throws IOException
 	 */
-	public static DataTable newFromFile(File file, String delimiter, boolean headers, boolean detectNumeric) throws IOException {
+	public static DataTable newFromFile(File file, String delimiter, boolean headers, 
+			boolean detectNumeric, boolean renderstate) throws IOException {
 		CsvParser csv = new CsvParser(file, delimiter, headers);
 		if(!detectNumeric)
 			csv.disableAutoboxing();
+		if(!renderstate)
+			csv.disableRenderState();
 		csv.parse();
 		return csv.dataTable();
 	}
@@ -972,6 +976,24 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 	}
 	
 	/**
+	 * DataRows are susceptible to attaining schemas containing TheoreticalValues.
+	 * The DataTable class can correct for this and identify the true schema if the data exists,
+	 * but the individual schemas may persist. This method will apply the true schema to each
+	 * DataRow to eliminate TheoreticalValues from them and clean up the overall schema integrity
+	 * of the table. It is recommended that after large adds, removals, transformations, etc, this
+	 * method be called to create a constant schema throughout, however, this was designed
+	 * as a non-essential method because the presence of TheoreticalValues in the individual
+	 * DataRow schemas is not an issue in the table determining the proper schema.
+	 */
+	public void renderState() {
+		if(isRendered)
+			return;
+		for(DataRow row : rows)
+			row.setSchema(schema);
+		isRendered = true;
+	}
+	
+	/**
 	 * Return a collection of all the row names
 	 * @return collection of the DataTable's row names
 	 */
@@ -1146,28 +1168,35 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 	}
 	
 	/**
+	 * Resets any caches on add operations that may alter the state
+	 * of the table
+	 */
+	private void tableUpdate() {
+		isRendered = false;
+	}
+	
+	/**
 	 * Matrix-transform the DataTable
 	 */
 	public void transform() {
 		if(this.isEmpty())
 			throw new NullPointerException();
 		Class<?> converter = null;
-		if(!(new HashSet<Class<? extends Object>>(schema).size()==1)) { //If not all the same class of Cols
+		if(!schema.isSingular()) { //If not all the same class of Cols
 			converter = NumericClassHierarchy.highestCommonConvertableClass(cols);
-		} else converter = schema.get(0);
+		} else converter = schema.getContentClass();
 		
 		List<DataRow> numericDCs = new ArrayList<DataRow>();
 		List<String> newColNames = new ArrayList<String>(rowNames());
 		for(DataColumn d : cols) {
-			DataColumn dar = converter.equals(Double.class) ? d.asDouble() : 
+			/*DataColumn dar = converter.equals(Double.class) ? d.asDouble() : 
 								(converter.equals(Integer.class) ? d.asInteger() : 
-									d.asCharacter());
+									d.asCharacter());*/
+			DataColumn dar = converter.equals(String.class) ? d.asCharacter() : d.asNumeric();
 			numericDCs.add(dar.toDataRow());
 		}
 		this.clear();
-		for(DataRow d : numericDCs)
-			addRow(d);
-		//schema = numericDCs.get(0).schema(); //Don't need to set this, addRow() does
+		this.addAllRows(numericDCs);
 		this.setColNames(newColNames);
 	}
 	

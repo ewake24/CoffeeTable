@@ -7,9 +7,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 
 import coffeetable.interfaces.RowUtilities;
 import coffeetable.interfaces.VectorUtilities;
@@ -23,6 +21,7 @@ import coffeetable.utils.SchemaMismatchException;
 public class DataRow extends ArrayList implements java.io.Serializable, VectorUtilities, RowUtilities {
 	private static final long serialVersionUID = 3148244157795837127L;
 	private String name;
+	private boolean schemaFound = false;
 	private Schema schema = new Schema();
 	
 	public DataRow(int initSize) {
@@ -85,6 +84,9 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 	}
 	
 	public boolean containsNA() {
+		/* Originally returned schema.containsNAs() but if the 
+		 * DataTable is rendered, the schema will no longer contain
+		 * NAs. */
 		if(this.isEmpty())
 			return false;
 		for(Object t : this) {
@@ -95,6 +97,8 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 	}
 	
 	public int countMissingValues() {
+		/* Don't call containsNA() because then have to loop through
+		 * twice. */
 		if(this.isEmpty())
 			return 0;
 		int sum = 0;
@@ -118,6 +122,7 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 		} else {
 			clone.schema = null;
 		}
+		clone.schemaFound = this.schemaFound;
 		return clone;
 	}
 	
@@ -127,20 +132,7 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 	 * @return the class of the DataRow contents if it is singular
 	 */
 	protected final Class<? extends Object> identifyClass() {
-		return typeSafetyList().get(0);
-	}
-	
-	@SuppressWarnings("unchecked")
-	private final boolean isSameClass() {
-		HashSet<Class> sdf = new HashSet(typeSafetyList());
-		if(sdf.size() ==1 )
-			return true;
-		if(sdf.contains(MissingValue.class))
-			sdf.remove(MissingValue.class);
-		if(sdf.contains(Infinite.class))
-			sdf.remove(Infinite.class);
-		
-		return (sdf.size()==1); //|| (sdf.size()==2 && sdf.contains(MissingValue.class));
+		return typeSafetyList().getContentClass();
 	}
 	
 	public String name() {
@@ -179,12 +171,17 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 		return super.removeAll(arg0);
 	}
 	
+	
 	private final void rowUpdate() {
 		schema = null;
+		schemaFound = false;
 	}
 	
+	/**
+	 * returns the schema of the DataRow
+	 */
 	public Schema schema() {
-		if(!(null == schema))
+		if(!(null == schema) && schemaFound)
 			return schema;
 		return typeSafetyList();
 	}
@@ -204,7 +201,15 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 		return schema.get(index).equals(element.getClass());
 	}
 	
+	
 	@SuppressWarnings("unchecked")
+	/**
+	 * Set the value of the Object at the specified index
+	 * to the element param
+	 * @param element - the new value of the specified index
+	 * @param index - the index at which to set a new value
+	 * @return the old value of the specified index
+	 */
 	public Object set(int index, Object element) {
 		if(!schemaCheck(element, index))
 			throw new SchemaMismatchException("New object does not match schema");
@@ -212,6 +217,9 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 		return super.set(index, element);
 	}
 	
+	/**
+	 * Assign a name for the row
+	 */
 	public void setName(String name) {
 		this.name = (null == name || name.isEmpty()) ? "DataRow" : 
 						(name.equals("DataColumn") ? "DataRow" : name); 
@@ -226,12 +234,17 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 		if(sch.isEmpty())
 			return;
 		schema = sch;
+		schemaFound = true;
 	}
 	
-	@SuppressWarnings("unchecked")
+	/**
+	 * Will convert the DataRow to DataColumn
+	 * @return a DataColumn-transformed DataRow
+	 */
 	public DataColumn toDataColumn() {
-		if(isSameClass()) {
-			DataColumn d = new DataColumn( Arrays.asList(super.toArray()) , name );
+		if(typeSafetyList().isSingular()) {
+			//DataColumn d = new DataColumn( Arrays.asList(super.toArray()) , name );
+			DataColumn d = new DataColumn(this);
 			return d;
 		} else throw new SchemaMismatchException("Cannot convert DataRow of multiple class types to DataColumn");
 	}
@@ -240,7 +253,13 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 		return name + " : " + super.toString();
 	}
 	
+	/**
+	 * Identifies the schema of the row
+	 * @return
+	 */
 	private final Schema typeSafetyList() {
+		if(schemaFound)
+			return schema;
 		Schema l = new Schema();
 		for( int i = 0; i < super.size(); i++ ) {
 			Class<?> cl = TheoreticalValue.isTheoretical(super.get(i)) ? 
@@ -250,6 +269,7 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 			l.add(cl);
 		}
 		schema = l;
+		schemaFound = true;
 		return l;
 	}
 	

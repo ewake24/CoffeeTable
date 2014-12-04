@@ -2,9 +2,12 @@ package coffeetable.datastructures;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 
+import coffeetable.math.Infinite;
 import coffeetable.math.MissingValue;
+import coffeetable.math.TheoreticalValue;
 
 
 /**
@@ -25,6 +28,33 @@ public class Schema extends LinkedList<Class<?>> implements Serializable {
 		super.addAll(schema);
 	}
 	
+	/**
+	 * Identifies the singular class of the schema (if singular)
+	 * @return the singular class of the schema, null if not singular
+	 */
+	protected Class<?> getContentClass() {
+		if(!this.isSingular())
+			return null;
+		return this.get(0);
+	}
+	
+	/**
+	 * Returns whether the schema contains any NA values
+	 * @return true if there are any TheoreticalValues in the schema
+	 */
+	public boolean containsNAs() {
+		if(this.isEmpty())
+			return false;
+		for(Class c : this)
+			if(TheoreticalValue.class.isAssignableFrom(c))
+				return true;
+		return false;
+	}
+	
+	/**
+	 * Returns whether the schema is completely numeric
+	 * @return true if all classes are numeric
+	 */
 	public boolean isNumeric() {
 		if(null==this)
 			return false;
@@ -35,8 +65,13 @@ public class Schema extends LinkedList<Class<?>> implements Serializable {
 		return true;
 	}
 	
+	/**
+	 * Determines whether the schema matches another schema
+	 * @param sch
+	 * @return true if the schemas match
+	 */
 	public boolean isSafe(Schema sch) {
-		if(!(this.contains(MissingValue.class) || sch.contains(MissingValue.class)))
+		if(!(this.containsNAs() || sch.containsNAs()))
 			return this.equals(sch);
 		if(sch.size() != this.size())
 			return false;
@@ -44,9 +79,9 @@ public class Schema extends LinkedList<Class<?>> implements Serializable {
 		//Check...
 		for(int i = 0; i < sch.size(); i++) {
 			Class<?> c = sch.get(i);
-			if(c.equals(MissingValue.class))
+			if(TheoreticalValue.class.isAssignableFrom(c))
 				continue;
-			else if(this.get(i).equals(MissingValue.class)) {
+			else if(TheoreticalValue.class.isAssignableFrom(this.get(i))) {
 				postcheckSetter.put(i, c);
 				continue;
 			} else if(!c.equals(this.get(i))) {
@@ -60,6 +95,22 @@ public class Schema extends LinkedList<Class<?>> implements Serializable {
 				this.set(key, postcheckSetter.get(key));
 		}
 		return true;
+	}
+	
+	/**
+	 * Returns whether the schema only contains one class
+	 * @return true if all classes are equal
+	 */
+	public boolean isSingular() {
+		HashSet<Class> sdf = new HashSet<Class>(this);
+		if(sdf.size() ==1 )
+			return true;
+		if(sdf.contains(MissingValue.class))
+			sdf.remove(MissingValue.class);
+		if(sdf.contains(Infinite.class))
+			sdf.remove(Infinite.class);
+		
+		return (sdf.size()==1);
 	}
 	
 	public String toString() {

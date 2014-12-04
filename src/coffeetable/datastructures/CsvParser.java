@@ -23,6 +23,7 @@ public class CsvParser {
 	private final static String defaultDelimiter = ",";
 	private boolean autobox = true;
 	private boolean headers = false;
+	private boolean renderstate = true;
 	private String delimiter = null;
 	private DataTable datatable;
 	private File file;
@@ -86,6 +87,10 @@ public class CsvParser {
 		autobox = false;
 	}
 	
+	public void disableRenderState() {
+		renderstate = false;
+	}
+	
 	private final static boolean fileIsAcceptable(File file) {
 		return file.exists() && file.isFile() && file.canRead();
 	}
@@ -143,5 +148,7 @@ public class CsvParser {
 			datatable.setColNames( Arrays.asList(headerlist) );
 		if(autobox)
 			autoBox();
+		if(renderstate)
+			datatable.renderState();
 	}
 }

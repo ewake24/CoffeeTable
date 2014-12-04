@@ -3,9 +3,9 @@
 
 *DataTable structure in Java*
 
-This library provides a data structure class (DataTable) similar to that of the DataTable in C# and implementing vector operations and functionality similar to that of the R data.frame.  Additionally, the library provides the tools to easily create new DataTables from various types of delimited files as well as to write DataTables to file. 
+At a high level, this library provides a data structure class (DataTable) similar to that of the DataTable in C# and implementing vector operations and functionality similar to that of the R data.frame.  Additionally, the library provides the tools to easily create new DataTables from various types of delimited files as well as to write DataTables to files, serialize and deserialize from ObjectOutputStreams. 
 
-By nature, a DataTable’s columns are type safe, while its rows allow wildcard adds. However, a special class, MissingValue (similar to C# DBNull), will replace empty fields or NA fields, allow for easy arithmetic functions while avoiding NullPointerExceptions, and otherwise stay out of the way of your operations.
+By nature, a DataTable’s columns are type safe, while its rows allow wildcard adds. However, a special class, TheoreticalValue (similar to C# DBNull), will replace empty fields, NA fields and infinite values, allow for easy arithmetic functions while avoiding NullPointerExceptions, and otherwise stay out of the way of your operations. 
 
 *The documentation for this library is provided in a JavaDoc included in this Git*
 

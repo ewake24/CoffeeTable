@@ -95,12 +95,29 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	
 	/**
 	 * Another DataTable constructor for when the number of rows is known.
+	 * Used for reading in from CSV -- type is set to String
 	 * @param trusted
 	 * @param size
 	 */
 	protected DataColumn(boolean trusted, int size) {
 		this(size);
 		type = String.class;
+	}
+	
+	/**
+	 * Protected constructor for transformations from
+	 * DataRow to DataColumn
+	 * @param row
+	 */
+	@SuppressWarnings("unchecked")
+	protected DataColumn(DataRow row) {
+		//Don't need to check for singularity, because it was checked from DataRow
+		for(Object o : row)
+			this.addFromTrusted((T) o);
+		this.isNumeric = row.schema().isNumeric();
+		this.checkedForNumericism = true;
+		this.type = row.schema().getContentClass();
+		this.setName(row.name());
 	}
 	
 	
@@ -522,7 +539,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * @return a string-converted instance of DataColumn
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	protected final DataColumn<String> asCharacter() {
+	public final DataColumn<String> asCharacter() {
 		if(contentClass().equals(String.class))
 			return (DataColumn) this;
 		Collection<String> coll = new ArrayList<String>();
@@ -550,7 +567,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * @return a double-converted DataColumn
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	protected final DataColumn<Double> asDouble() {
+	private final DataColumn<Double> asDouble() {
 		if(contentClass().equals(Double.class))
 			return (DataColumn) this;
 		ArrayList collection = new ArrayList(this.size());
@@ -574,7 +591,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * @return an integer-converted DataColumn
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	protected final DataColumn<Integer> asInteger() {
+	private final DataColumn<Integer> asInteger() {
 		if(contentClass().equals(Integer.class))
 			return (DataColumn) this;
 		ArrayList collection = new ArrayList(this.size());
