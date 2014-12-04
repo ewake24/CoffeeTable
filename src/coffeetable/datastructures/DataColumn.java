@@ -982,7 +982,8 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	}
 	
 	private final boolean numberCouldBeDouble(String ts) {
-		return ts.matches("-?\\d|\\.+(\\d+)?+[eE][-+]?\\d");
+		return ts.matches("[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?");
+				//ts.matches("-?\\d|\\.+(\\d+)?+[eE][-+]?\\d");
 	}
 	
 	/**
@@ -1086,7 +1087,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 							return new Infinite(s1.getKey().toString()).sortOrder();			//What's its sort order?
 						/* The first is not infinite, but the second is. Return the first's
 						 * position in relation to the second's sort order (-1 * val) */
-						return new Infinite(s1.getKey().toString()).sortOrder() * -1;
+						return new Infinite(s2.getKey().toString()).sortOrder() * -1;
 					} else if(Infinite.isInfinite(s1.getKey()) && Infinite.isInfinite(s2.getKey()))
 						return Integer.valueOf(new Infinite(s1.getKey().toString()).sortOrder())
 								.compareTo( Integer.valueOf(new Infinite(s2.getKey().toString()).sortOrder()) );
@@ -1172,6 +1173,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * HIGH otherwise.
 	 * @return a comparator to sort the column by object length
 	 */
+	//TODO: Optimize infinity comparator
 	private final Comparator<T> sortableComparator() {
 		return new Comparator<T>() {
 			@Override
@@ -1187,7 +1189,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 						return new Infinite(s1.toString()).sortOrder();			//What's its sort order?
 					/* The first is not infinite, but the second is. Return the first's
 					 * position in relation to the second's sort order (-1 * val) */
-					return new Infinite(s1.toString()).sortOrder() * -1;
+					return new Infinite(s2.toString()).sortOrder() * -1;
 				} else if(Infinite.isInfinite(s1) && Infinite.isInfinite(s2))
 					return Integer.valueOf(new Infinite(s1.toString()).sortOrder())
 							.compareTo( Integer.valueOf(new Infinite(s2.toString()).sortOrder()) );

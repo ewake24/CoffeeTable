@@ -1,12 +1,16 @@
 package coffeetable.math;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.HashSet;
 
 import coffeetable.utils.InfinityException;
-import coffeetable.utils.MissingValueException;
 
 public class Infinite extends TheoreticalValue implements Comparable<Number>, Serializable {
 	private static final long serialVersionUID = 4527336245481667931L;
+	private final static HashSet<String> acceptable = new HashSet<String>(
+		Arrays.asList( new String[] {"inf","infinite","infinity"} )
+	);
 	private final int posOrNeg;
 	private final String rep;
 	
@@ -16,18 +20,18 @@ public class Infinite extends TheoreticalValue implements Comparable<Number>, Se
 	}
 	
 	public Infinite(String s) {
-		if(MissingValue.isNA(s))
-			throw new MissingValueException(s + " is not infinite, it is NA");
-		else if(!s.contains("inf"))
-			throw new InfinityException(s + " is not infinite");
+		if(null == s)
+			throw new NullPointerException(s + " is not infinite");
 
 		boolean neg = s.contains("-");
 		if(neg) {
-			s.replace("-", "");
+			s = s.replace("-", "");
 			posOrNeg = -1;
 		} else posOrNeg = 1;
 		
 		rep = (neg ? "-" : "") + "Infinity";
+		if(!acceptable.contains(s.toLowerCase()))
+			throw new InfinityException(s + " is not infinite!");
 	}
 	
 	/**
@@ -43,9 +47,9 @@ public class Infinite extends TheoreticalValue implements Comparable<Number>, Se
 	
 	public static boolean isInfinite(Object o) {
 		String s = o.toString().toLowerCase();
-		return s.equals("inf")
-			|| s.equals("infinite")
-			|| s.equals("infinity")
+		return s.equals("inf") || s.equals("-inf")
+			|| s.equals("infinite") || s.equals("-infinite")
+			|| s.equals("infinity") || s.equals("-infinity")
 			|| (o instanceof Double 
 				&& o.equals(Double.POSITIVE_INFINITY));
 	}
