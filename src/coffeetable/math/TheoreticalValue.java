@@ -14,19 +14,16 @@ public abstract class TheoreticalValue extends Number implements Comparable<Numb
 		return 0;
 	}
 
-	@Override
 	public double doubleValue() {
-		return 0;
+		return Double.NaN;
 	}
 
-	@Override
 	public float floatValue() {
-		return 0;
+		return Float.NaN;
 	}
 
-	@Override
 	public int intValue() {
-		return 0;
+		return new Integer(null);
 	}
 	
 	public static boolean isTheoretical(Object s) {
@@ -37,6 +34,6 @@ public abstract class TheoreticalValue extends Number implements Comparable<Numb
 
 	@Override
 	public long longValue() {
-		return 0;
+		return new Long(null);
 	}
 }
