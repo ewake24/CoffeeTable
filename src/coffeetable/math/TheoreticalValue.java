@@ -21,6 +21,12 @@ public abstract class TheoreticalValue extends Number implements Comparable<Numb
 	public float floatValue() {
 		return Float.NaN;
 	}
+	
+	public int hashCode() {
+		return Integer.valueOf(
+			String.valueOf(TheoreticalValue.serialVersionUID).substring(0,7)	
+		) * 87;
+	}
 
 	public int intValue() {
 		return new Integer(null);

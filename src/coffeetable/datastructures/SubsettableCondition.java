@@ -8,10 +8,9 @@ import coffeetable.utils.MissingValueException;
 
 /**
  * A class used to define a condition by which a DataTable's rows will
- * be subset. NOTE: a condition can not be predicated on the MissingValue
- * class, as this is equivalent to pointing to a null value. If you desire
- * to remove all NAs from a column, define the evaluator with the .removeNA()
- * method in the Builder class.
+ * be subset. NOTE: to subset on the presence of a TheoreticalValue, the
+ * only valid condition is EQUALS, as a value greater than, less than or otherwise
+ * is not defined in relation to Infinite, MissingValue or NaN
  * @author Taylor G Smith
  */
 @SuppressWarnings("rawtypes")
@@ -22,6 +21,7 @@ public class SubsettableCondition {
 	private boolean negate = false; //Should it perform the opposite?
 	private final boolean removeNA;
 	private Comparator<Comparable> comparator;
+	private boolean valueIsTheo;
 	
 	public static enum Evaluator {
 		EQUALS, LESSTHAN, GREATERTHAN
@@ -45,6 +45,10 @@ public class SubsettableCondition {
 			return this;
 		}
 		
+		/**
+		 * Will remove all TheoreticalValues if selected
+		 * @return an instance of Builder
+		 */
 		public Builder removeNA() {
 			removeNA = true;
 			return this;
@@ -64,6 +68,11 @@ public class SubsettableCondition {
 		
 		this.removeNA = builder.removeNA;
 		this.comparator = setComparator();
+		
+		if((valueIsTheo = TheoreticalValue.isTheoretical(value)) && removeNA)
+			throw new IllegalArgumentException("Cannot subset for TheoreticalValues and concurrently remove them");
+		if(valueIsTheo && !equals)
+			throw new IllegalArgumentException("Cannot evaluate for TheoreticalValue in any manner other than \"EQUALS\"");
 	}
 	
 	/**
@@ -98,9 +107,15 @@ public class SubsettableCondition {
 				boolean pass = false;
 				if(!removeNA)
 					pass = true;
+				if(negate)
+					pass = valueIsTheo ? false : pass;
 				bool[index++] = pass;
 				continue;
+			} else if(valueIsTheo) { //The current ob is not theo, but we only want theos (unless negate)
+				bool[index++] = negate? true : false;
+				continue;
 			}
+			
 			int compare = comparator.compare((Comparable) o, (Comparable) value);
 			bool[index++] = !negate ? compare == comp : compare != comp; //Non-negate:Negate
 		}

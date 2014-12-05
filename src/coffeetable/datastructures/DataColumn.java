@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import coffeetable.interfaces.VectorUtilities;
 import coffeetable.math.Infinite;
@@ -711,9 +712,12 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	/**
 	 * To be called any time the column is updated;
 	 * resets the widthCalculated cache parameter as well
-	 * as other parameters critical in exception handling
+	 * as other parameters critical in exception handling.
+	 * 
+	 * Can also be called if a DataTable performs a subsetting
+	 * operation
 	 */
-	private final void columnUpdate() {
+	protected final void columnUpdate() {
 		widthCalculated = false;
 		/* These need to be reset in case a dumb user
 		 * is using an unchecked addition to the column.
@@ -721,6 +725,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		checkedForNumericism = false;
 		checkedForConvertable = false;
 		checkedForNAs = false;
+		containsNAs = false;
 	}
 	
 	/**
@@ -995,6 +1000,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 				System.out.println( name );
 			for( T t : this )
 				System.out.println( t.toString() );
+			System.out.println();
 		} else return;
 	}
 
@@ -1046,6 +1052,37 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	}
 	
 	/**
+	 * Checks for TheoreticalValues in a comparator operation and
+	 * returns the appropriate value for sorting
+	 * @return
+	 */
+	private final int returnInComparator(T s1, T s2) {
+		boolean s1NA = MissingValue.isNA(s1);
+		boolean s2NA = MissingValue.isNA(s2);
+		boolean s1Inf = Infinite.isInfinite(s1);
+		boolean s2Inf = Infinite.isInfinite(s2);
+		
+		if(s1NA || s2NA || s1Inf || s2Inf) {
+			if(s1NA ^ s2NA)
+				return s1NA ? -1 : 1;
+			if(s1NA && s2NA)
+				return 0;
+			
+			if(s1Inf ^ s2Inf) {	//Only one inf
+				if(s1Inf)		//The first is inf
+					return Infinite.sortOrder((Infinite)s1);	//What's its sort order?
+				
+				/* The first is not infinite, but the second is. Return the first's
+				 * position in relation to the second's sort order (-1 * val) */
+				return Infinite.sortOrder((Infinite)s2) * -1;
+			} else if(s1Inf && s2Inf) return ((Infinite)s1).compareTo((Infinite)s2);
+				/*return Integer.valueOf(Infinite.sortOrder((Infinite)s1))
+						.compareTo( Integer.valueOf(Infinite.sortOrder((Infinite)s2)) );*/
+		}
+		return s1.compareTo(s2);
+	}
+	
+	/**
 	 * Sets the corresponding index to the passed-in Object
 	 */
 	public T set(int index, T element) {
@@ -1074,26 +1111,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		return new Comparator<Map.Entry<T,Integer>>() {
 			@Override
 			public int compare(Map.Entry<T,Integer> s1, Map.Entry<T,Integer> s2) {
-				/* Are either theoretical? */
-				if( TheoreticalValue.isTheoretical(s1.getKey()) || TheoreticalValue.isTheoretical(s2.getKey()) ) {
-					/* Missing Val checks */
-					if(MissingValue.isNA(s1.getKey()) ^ MissingValue.isNA(s2.getKey()))
-						return MissingValue.isNA(s1.getKey()) ? -1 : 1;
-					if(MissingValue.isNA(s1.getKey()) && MissingValue.isNA(s2.getKey()))
-						return 0;
-					
-					if(Infinite.isInfinite(s1.getKey()) ^ Infinite.isInfinite(s2.getKey())) {	//Only one inf
-						if(Infinite.isInfinite(s1.getKey()))									//The first is inf
-							return new Infinite(s1.getKey().toString()).sortOrder();			//What's its sort order?
-						/* The first is not infinite, but the second is. Return the first's
-						 * position in relation to the second's sort order (-1 * val) */
-						return new Infinite(s2.getKey().toString()).sortOrder() * -1;
-					} else if(Infinite.isInfinite(s1.getKey()) && Infinite.isInfinite(s2.getKey()))
-						return Integer.valueOf(new Infinite(s1.getKey().toString()).sortOrder())
-								.compareTo( Integer.valueOf(new Infinite(s2.getKey().toString()).sortOrder()) );
-				}
-				
-				return s1.getKey().compareTo(s2.getKey());
+				return returnInComparator(s1.getKey(),s2.getKey());
 			}
 		};
 	}
@@ -1168,33 +1186,16 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	}
 	
 	/**
-	 * The comparator to be used for sorting by length. 
+	 * The comparator to be used for default col sorts (not in a DataTable)
 	 * NAs or MissingValue objects will sort LOW for ascending, 
 	 * HIGH otherwise.
 	 * @return a comparator to sort the column by object length
 	 */
-	//TODO: Optimize infinity comparator
 	private final Comparator<T> sortableComparator() {
 		return new Comparator<T>() {
 			@Override
 			public int compare(T s1, T s2) {
-				if(MissingValue.isNA(s1) ^ MissingValue.isNA(s2))
-					return MissingValue.isNA(s1) ? -1 : 1;
-				
-				if(MissingValue.isNA(s1) && MissingValue.isNA(s2))
-					return 0;
-				
-				if(Infinite.isInfinite(s1) ^ Infinite.isInfinite(s2)) {	//Only one inf
-					if(Infinite.isInfinite(s1))									//The first is inf
-						return new Infinite(s1.toString()).sortOrder();			//What's its sort order?
-					/* The first is not infinite, but the second is. Return the first's
-					 * position in relation to the second's sort order (-1 * val) */
-					return new Infinite(s2.toString()).sortOrder() * -1;
-				} else if(Infinite.isInfinite(s1) && Infinite.isInfinite(s2))
-					return Integer.valueOf(new Infinite(s1.toString()).sortOrder())
-							.compareTo( Integer.valueOf(new Infinite(s2.toString()).sortOrder()) );
-				
-				return s1.compareTo(s2);
+				return returnInComparator(s1,s2);
 			}
 		};
 	}
@@ -1220,6 +1221,24 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 */
 	public double standardDeviation() {
 		return ArithmeticOperations.standardDeviation(this);
+	}
+	
+	public DataColumn<T> subsetByCondition(SubsettableCondition sub) {
+		boolean[] keeps = subsetLogicalVector(sub);
+		
+		DataColumn<T> dc = new DataColumn<T>(new ArrayList<T>(this), this.name+"_Subset");
+		int j = 0;
+		for(int i = 0; i < this.size(); i++) {
+			if(!keeps[i])
+				dc.remove(j);
+			else j++; //Only increments if true
+		}
+		dc.columnUpdate();
+		return dc;
+	}
+	
+	public boolean[] subsetLogicalVector(SubsettableCondition sub) {
+		return sub.evaluate(this);
 	}
 	
 	/**
@@ -1262,6 +1281,10 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 */
 	public String toString() {
 		return name + ": " + super.toString();
+	}
+	
+	public Set<T> unique() {
+		return new HashSet<T>(this);
 	}
 	
 	/**

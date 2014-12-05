@@ -18,7 +18,6 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import coffeetable.interfaces.RowUtilities;
-import coffeetable.interfaces.VectorUtilities;
 import coffeetable.io.DataTableWriter;
 import coffeetable.io.HtmlTableWriter;
 import coffeetable.utils.DimensionMismatchException;
@@ -42,7 +41,7 @@ import coffeetable.math.Infinite;
  * @see Infinite
  */
 @SuppressWarnings("rawtypes")
-public class DataTable implements java.io.Serializable, Cloneable, VectorUtilities, RowUtilities {
+public class DataTable implements java.io.Serializable, Cloneable, RowUtilities {
 	private static final long serialVersionUID = -246560507184440061L;
 	private List<DataColumn> cols;
 	private List<DataRow> rows;
@@ -476,6 +475,12 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 		return (DataColumn<String>) col.asCharacter();
 	}
 	
+	public void clearColumnCaches() {
+		//Reset column caches
+		for(DataColumn c : cols)
+			c.columnUpdate();
+	}
+	
 	/**
 	 * Returns a collection of the DataTable's column names
 	 * @return collection of the DataTable's column names
@@ -893,6 +898,7 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 			}
 			System.out.println(sb.toString());
 		}
+		System.out.println();
 	}
 	
 	public final static DataTable readFromSerializedObject(FileInputStream fileIn) throws IOException, ClassNotFoundException {
@@ -1151,9 +1157,9 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 	public DataTable subsetByCondition(DataColumn eval, SubsettableCondition sub) {
 		if(!cols.contains(eval))
 			throw new IllegalArgumentException("Specified column not found in table");
-		boolean[] keeps = sub.evaluate(eval);
+		boolean[] keeps = eval.subsetLogicalVector(sub);
 		
-		DataTable dt = new DataTable(rows,this.tableName+" subset");
+		DataTable dt = new DataTable(rows, tableName+"_Subset");
 		dt.options = this.options;
 		dt.setColNames(new ArrayList<String>(this.columnNames()));
 		dt.setRowNames(new ArrayList<String>(this.rowNames()));
@@ -1164,6 +1170,8 @@ public class DataTable implements java.io.Serializable, Cloneable, VectorUtiliti
 				dt.removeRow(j);
 			else j++; //Only increments if true
 		}
+		
+		dt.clearColumnCaches();
 		return dt;
 	}
 	

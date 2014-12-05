@@ -45,6 +45,16 @@ public class Infinite extends TheoreticalValue implements Comparable<Number>, Se
 		return posOrNeg > 0 ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
 	}
 	
+	public boolean equals(Object arg0) {
+		return (arg0 instanceof Infinite) && arg0.hashCode() == this.hashCode();
+	}
+	
+	public int hashCode() {
+		int hash = super.hashCode();
+		hash = 89 * hash * posOrNeg;
+		return hash;
+	}
+	
 	public static boolean isInfinite(Object o) {
 		String s = o.toString().toLowerCase();
 		return s.equals("inf") || s.equals("-inf")
@@ -66,8 +76,8 @@ public class Infinite extends TheoreticalValue implements Comparable<Number>, Se
 		return posOrNeg > 0 ? Long.MAX_VALUE : Long.MIN_VALUE;
 	}
 	
-	public int sortOrder() {
-		return posOrNeg;
+	public static int sortOrder(Infinite i) {
+		return i.posOrNeg;
 	}
 
 	public String toString() {

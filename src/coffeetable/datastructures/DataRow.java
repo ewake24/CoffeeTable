@@ -8,6 +8,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import coffeetable.interfaces.RowUtilities;
 import coffeetable.interfaces.VectorUtilities;
@@ -271,6 +273,11 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 		schema = l;
 		schemaFound = true;
 		return l;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public Set<?> unique() {
+		return new HashSet(this);
 	}
 	
 	/**
