@@ -630,6 +630,12 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 		return newdata;
 	}
 	
+	public boolean equals(Object o) {
+		if(!(o instanceof DataTable))
+			return false;
+		return o.hashCode() == this.hashCode();
+	}
+	
 	/**
 	 * Returns the list of any exceptions that have been handled since the instantiation
 	 * of the DataTable instance (generally parsing exceptions if auto-detect type is
@@ -704,6 +710,13 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 */
 	public boolean hasExceptions() {
 		return !exceptionLog.isEmpty();
+	}
+	
+	public int hashCode() {
+		int h = 0;
+		for(DataColumn col : cols)
+			h += col.hashCode();
+		return h;
 	}
 	
 	/**

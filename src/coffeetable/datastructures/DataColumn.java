@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -834,6 +835,12 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		}
 	}
 	
+	public boolean equals(Object o) {
+		if(!(o instanceof DataColumn))
+			return false;
+		return o.hashCode() == this.hashCode();
+	}
+	
 	/**
 	 * Returns the vector similarity (or Euclidean distance) between
 	 * this instance of the DataColumn and another. NOTE: this will throw
@@ -845,6 +852,17 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	@SuppressWarnings("rawtypes")
 	public double euclideanDistance(DataColumn arg0) {
 		return ArithmeticOperations.euclideanDistance(this, arg0);
+	}
+	
+	public int hashCode() {
+		int h = 0;
+		Iterator<T> i = iterator();
+		while (i.hasNext()) {
+			T obj = i.next();
+			if (obj != null)
+				h += obj.hashCode();
+		}
+		return h^this.size();
 	}
 	
 	/**

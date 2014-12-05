@@ -9,6 +9,7 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import coffeetable.interfaces.RowUtilities;
@@ -126,6 +127,23 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 		}
 		clone.schemaFound = this.schemaFound;
 		return clone;
+	}
+	
+	public boolean equals(Object o) {
+		if(!(o instanceof DataRow))
+			return false;
+		return o.hashCode() == this.hashCode();
+	}
+	
+	public int hashCode() {
+		int h = 0;
+		Iterator i = iterator();
+		while (i.hasNext()) {
+			Object obj = i.next();
+			if (obj != null)
+				h += obj.hashCode();
+		}
+		return h^this.size();
 	}
 	
 	/**
