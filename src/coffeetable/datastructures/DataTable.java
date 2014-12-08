@@ -655,6 +655,8 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	}
 	
 	/**
+	 * Will throw an ArrayIndexOutOfBoundsException if the name is
+	 * not found amongst the column names
 	 * @param name
 	 * @return DataColumn with specified name
 	 */

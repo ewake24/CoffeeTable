@@ -476,7 +476,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		 * @param original
 		 * @return the numerically-converted DataColumn with cloned attributes
 		 */
-		private final static DataColumn<?> asNumericUtilities(DataColumn<?> returnable, DataColumn<?> original) {
+		private final static <T extends Comparable<? super T>> DataColumn<? extends Number> asNumericUtilities(DataColumn<? extends Number> returnable, DataColumn<T> original) {
 			returnable.isNumeric = true;
 			returnable.checkedForNumericism = true;
 			returnable.isConvertable = true;
@@ -492,33 +492,10 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 			return returnable;
 		}
 		
-		/* For future implementations, but now issue is only returns doubles...
 		@SuppressWarnings({ "unchecked", "rawtypes" })
-		public final static <T extends Comparable<? super T>> DataColumn<? extends Number> asNumeric(DataColumn<T> arg0, boolean asDouble) {
-			if(asDouble && arg0.contentClass().equals(Double.class))
-				return (DataColumn) arg0;
-			else if(!asDouble && arg0.contentClass().equals(Integer.class))
-				return (DataColumn) arg0;
-			ArrayList collection = new ArrayList(arg0.size());
-			for(T t : arg0) {
-				String tar = arg0.contentClass().equals(String.class) ? (String) t : t.toString();
-				if(MissingValue.isNA(tar))
-					collection.add(new MissingValue());
-				else if(Infinite.isInfinite(tar))
-					collection.add(new Infinite(tar));
-				else collection.add( asDouble ? new Double(tar) : new Integer(tar) );
-			}
-			DataColumn<Double> returnable = new DataColumn<Double>(collection);
-			returnable.type = asDouble ? Double.class : Integer.class;
-			returnable = (DataColumn) asNumericUtilities(returnable, arg0);
-			return returnable;
-		}*/
-		
-		
-		@SuppressWarnings({ "unchecked", "rawtypes" })
-		public final static <T extends Comparable<? super T>> DataColumn<Double> asDouble(DataColumn<T> arg0) {
-			if(arg0.contentClass().equals(Double.class))
-				return (DataColumn) arg0;
+		public static <T extends Comparable<? super T>> DataColumn<Double> asDouble(DataColumn<T> arg0) {
+			/*if(arg0.contentClass().equals(Double.class))
+				return (DataColumn) arg0;*/
 			ArrayList collection = new ArrayList(arg0.size());
 			for(T t : arg0) {
 				String tar = arg0.contentClass().equals(String.class) ? (String) t : t.toString();
@@ -535,9 +512,9 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		}
 		
 		@SuppressWarnings({ "unchecked", "rawtypes" })
-		public final static <T extends Comparable<? super T>> DataColumn<Integer> asInteger(DataColumn<T> arg0) {
-			if(arg0.contentClass().equals(Integer.class))
-				return (DataColumn) arg0;
+		public static <T extends Comparable<? super T>> DataColumn<Integer> asInteger(DataColumn<T> arg0) {
+			/*if(arg0.contentClass().equals(Integer.class))
+				return (DataColumn) arg0;*/
 			ArrayList collection = new ArrayList(arg0.size());
 			for(T t : arg0) {
 				String tar = arg0.contentClass().equals(String.class) ? (String) t : t.toString();
@@ -673,7 +650,6 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 			return (DataColumn<? extends Number>) this;
 		else if(isConvertableToNumeric()) {
 			Class<? extends Object> converter = numericConversionType();
-			//return TypeConversionUtils.asNumeric(this, !converter.equals(Integer.class));
 			return converter.equals(Integer.class) ? 
 					TypeConversionUtils.asInteger(this) : 
 						TypeConversionUtils.asDouble(this);
