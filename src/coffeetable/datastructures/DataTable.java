@@ -776,6 +776,9 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	/**
 	 * Will parse a file to an instance DataTable. The CsvParser will detect
 	 * numeric types if told to, but this operation may take slightly longer.
+	 * It is recommended the parameter, 'renderstate', be set to true, as this
+	 * will ensure accurate schemas for all DataRows and imposes only a very slight
+	 * runtime overhead
 	 * 
 	 * @param file
 	 * @param delimiter
@@ -998,7 +1001,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	
 	/**
 	 * DataRows are susceptible to attaining schemas containing TheoreticalValues.
-	 * The DataTable class can correct for this and identify the true schema if the data exists,
+	 * The DataTable class can correct for this and identify the true schema if the data exists in columns,
 	 * but the individual schemas may persist. This method will apply the true schema to each
 	 * DataRow to eliminate TheoreticalValues from them and clean up the overall schema integrity
 	 * of the table. It is recommended that after large adds, removals, transformations, etc, this
@@ -1049,6 +1052,22 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 */
 	private final boolean schemaIsSafe(Schema sch) {
 		return schema.isSafe(sch);
+	}
+	
+	/**
+	 * Will attempt to set a cell to a given object. If successful,
+	 * will return the old object, otherwise will throw a SchemaMismatchException
+	 * @param rowIndex - the row affected
+	 * @param colIndex - the column affected
+	 * @param o - the new Object
+	 * @return the old Object
+	 */
+	@SuppressWarnings("unchecked")
+	public Object set(int rowIndex, int colIndex, Object o) {
+		Object old;
+		old = cols.get(colIndex).set(rowIndex, o);
+		rows.get(rowIndex).set(colIndex, o);
+		return old;
 	}
 	
 	/**

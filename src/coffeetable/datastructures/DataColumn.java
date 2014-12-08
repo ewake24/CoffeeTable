@@ -918,6 +918,20 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 			return isNumeric;
 	}
 	
+	/* -- Intra-DataTable sorts -- */
+	/**
+	 * Sorts the actual map entries
+	 * @return a comparator to sort a collection of map entries
+	 */
+	private final Comparator<Map.Entry<T,Integer>> mapEntrySorter() {
+		return new Comparator<Map.Entry<T,Integer>>() {
+			@Override
+			public int compare(Map.Entry<T,Integer> s1, Map.Entry<T,Integer> s2) {
+				return returnInComparator(s1.getKey(),s2.getKey());
+			}
+		};
+	}
+	
 	/**
 	 * Returns the maximum number in the DataColumn. NOTE: this will throw
 	 * an exception for a datacolumn that is either NOT NUMERIC or NOT
@@ -1107,7 +1121,8 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 */
 	public T set(int index, T element) {
 		if(this.size() > 0)
-			ensureTypeSafety(element);
+			if(!ensureTypeSafety(element))
+				throw new SchemaMismatchException("Element type does not match column type");
 		columnUpdate();
 		return super.set(index, element);
 	}
@@ -1120,20 +1135,6 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 						(name.equals("DataRow") ? "DataColumn" : name);
 		if(widthCalculated && this.name.length() > width)
 			width = this.name.length();
-	}
-	
-	/* -- Intra-DataTable sorts -- */
-	/**
-	 * Sorts the actual map entries
-	 * @return a comparator to sort a collection of map entries
-	 */
-	private final Comparator<Map.Entry<T,Integer>> mapEntrySorter() {
-		return new Comparator<Map.Entry<T,Integer>>() {
-			@Override
-			public int compare(Map.Entry<T,Integer> s1, Map.Entry<T,Integer> s2) {
-				return returnInComparator(s1.getKey(),s2.getKey());
-			}
-		};
 	}
 	
 	public double range() {
@@ -1191,9 +1192,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		Collections.reverse(sortables);
 		return sortedMapEntryValues(sortables);
 	}
-
 	
-	/* -- PLAIN SORTS -- */
 	/**
 	 * To be used with render() -- this sorts the column by string length
 	 * @return the highest length item in the column
