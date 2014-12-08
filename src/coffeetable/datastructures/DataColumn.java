@@ -640,6 +640,22 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	}
 	
 	/**
+	 * Protected method used in DataTable transformations
+	 * @return Double-converted DataColumn
+	 */
+	protected final DataColumn<Double> asDouble() {
+		return TypeConversionUtils.asDouble(this);
+	}
+	
+	/**
+	 * Protected method used in DataTable transformations
+	 * @return Integer-converted DataColumn
+	 */
+	protected final DataColumn<Integer> asInteger() {
+		return TypeConversionUtils.asInteger(this);
+	}
+	
+	/**
 	 * Will return a clone of the current DataColumn parsed to the most
 	 * appropriate determined numeric type
 	 * @return a numerically-converted DataColumn
@@ -650,9 +666,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 			return (DataColumn<? extends Number>) this;
 		else if(isConvertableToNumeric()) {
 			Class<? extends Object> converter = numericConversionType();
-			return converter.equals(Integer.class) ? 
-					TypeConversionUtils.asInteger(this) : 
-						TypeConversionUtils.asDouble(this);
+			return converter.equals(Integer.class) ? asInteger() : asDouble();
 		} else throw new NumberFormatException("Cannot parse column to numeric");
 	}
 	

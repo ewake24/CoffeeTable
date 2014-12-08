@@ -1247,7 +1247,8 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 			/*DataColumn dar = converter.equals(Double.class) ? d.asDouble() : 
 								(converter.equals(Integer.class) ? d.asInteger() : 
 									d.asCharacter());*/
-			DataColumn dar = converter.equals(String.class) ? d.asCharacter() : d.asNumeric();
+			DataColumn dar = converter.equals(String.class) ? d.asCharacter() : 
+								converter.equals(Double.class) ? d.asDouble() : d.asInteger();
 			numericDCs.add(dar.toDataRow());
 		}
 		this.clear();
