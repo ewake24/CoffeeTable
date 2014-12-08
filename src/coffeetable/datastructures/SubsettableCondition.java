@@ -2,9 +2,7 @@ package coffeetable.datastructures;
 
 import java.util.Comparator;
 
-import coffeetable.math.MissingValue;
 import coffeetable.math.TheoreticalValue;
-import coffeetable.utils.MissingValueException;
 
 /**
  * A class used to define a condition by which a DataTable's rows will
@@ -36,8 +34,6 @@ public class SubsettableCondition {
 		public Builder(Evaluator evaluator, Object value) {
 			this.evaluator = evaluator;
 			this.value = value;
-			if(MissingValue.isNA(value))
-				throw new MissingValueException("Cannot subset by assessing MissingValue equivalency");
 		}
 		
 		public Builder negate() {

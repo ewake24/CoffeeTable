@@ -440,6 +440,121 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	}
 	
 	/**
+	 * A faster, static inner class to handle type conversions
+	 * @author Taylor G Smith
+	 */
+	static final class TypeConversionUtils {
+		/**
+		 * Will return a version of the DataColumn with all contents
+		 * converted to String.
+		 * @return a string-converted instance of DataColumn
+		 */
+		public final static <T extends Comparable<? super T>> DataColumn<String> asCharacter(DataColumn<T> arg0) {
+			Collection<String> coll = new ArrayList<String>();
+			for(T t : arg0) {
+				coll.add(t.toString());
+			}
+			DataColumn<String> data = new DataColumn<String>(coll);
+			data.isConvertable = arg0.isConvertable;
+			data.checkedForConvertable = arg0.checkedForConvertable;
+			data.isNumeric = false;
+			data.checkedForNumericism = false;
+			data.type = String.class;
+			data.conversionType = arg0.conversionType;
+			if(arg0.widthCalculated) {
+				data.width = arg0.width;
+				data.widthCalculated = true;
+			}
+			data.name = arg0.name;
+			return data;
+		}
+		
+		/**
+		 * Utilities for when a column is converted to some type of numeric. These are 
+		 * all attributes the new datacolumn will possess post-conversion
+		 * @param returnable
+		 * @param original
+		 * @return the numerically-converted DataColumn with cloned attributes
+		 */
+		private final static DataColumn<?> asNumericUtilities(DataColumn<?> returnable, DataColumn<?> original) {
+			returnable.isNumeric = true;
+			returnable.checkedForNumericism = true;
+			returnable.isConvertable = true;
+			returnable.checkedForConvertable = true;
+			returnable.checkedForNAs = original.checkedForNAs;
+			returnable.containsNAs = original.containsNAs;
+			if(original.widthCalculated) {
+				returnable.width = original.width;
+				returnable.widthCalculated = true;
+			}
+			returnable.conversionType = returnable.type;
+			returnable.name = original.name;
+			return returnable;
+		}
+		
+		/* For future implementations, but now issue is only returns doubles...
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		public final static <T extends Comparable<? super T>> DataColumn<? extends Number> asNumeric(DataColumn<T> arg0, boolean asDouble) {
+			if(asDouble && arg0.contentClass().equals(Double.class))
+				return (DataColumn) arg0;
+			else if(!asDouble && arg0.contentClass().equals(Integer.class))
+				return (DataColumn) arg0;
+			ArrayList collection = new ArrayList(arg0.size());
+			for(T t : arg0) {
+				String tar = arg0.contentClass().equals(String.class) ? (String) t : t.toString();
+				if(MissingValue.isNA(tar))
+					collection.add(new MissingValue());
+				else if(Infinite.isInfinite(tar))
+					collection.add(new Infinite(tar));
+				else collection.add( asDouble ? new Double(tar) : new Integer(tar) );
+			}
+			DataColumn<Double> returnable = new DataColumn<Double>(collection);
+			returnable.type = asDouble ? Double.class : Integer.class;
+			returnable = (DataColumn) asNumericUtilities(returnable, arg0);
+			return returnable;
+		}*/
+		
+		
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		public final static <T extends Comparable<? super T>> DataColumn<Double> asDouble(DataColumn<T> arg0) {
+			if(arg0.contentClass().equals(Double.class))
+				return (DataColumn) arg0;
+			ArrayList collection = new ArrayList(arg0.size());
+			for(T t : arg0) {
+				String tar = arg0.contentClass().equals(String.class) ? (String) t : t.toString();
+				if(MissingValue.isNA(tar))
+					collection.add(new MissingValue());
+				else if(Infinite.isInfinite(tar))
+					collection.add(new Infinite(tar));
+				else collection.add( new Double(tar) );
+			}
+			DataColumn<Double> returnable = new DataColumn<Double>(collection);
+			returnable.type = Double.class;
+			returnable = (DataColumn) asNumericUtilities(returnable, arg0);
+			return returnable;
+		}
+		
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		public final static <T extends Comparable<? super T>> DataColumn<Integer> asInteger(DataColumn<T> arg0) {
+			if(arg0.contentClass().equals(Integer.class))
+				return (DataColumn) arg0;
+			ArrayList collection = new ArrayList(arg0.size());
+			for(T t : arg0) {
+				String tar = arg0.contentClass().equals(String.class) ? (String) t : t.toString();
+				if(MissingValue.isNA(tar))
+					collection.add(new MissingValue());
+				else if(Infinite.isInfinite(tar))
+					collection.add(new Infinite(tar));
+				else collection.add( new Integer(tar) );
+			}
+			DataColumn<Integer> returnable = new DataColumn<Integer>(collection);
+			returnable.type = Integer.class;
+			returnable = (DataColumn) asNumericUtilities(returnable, arg0);
+			return returnable;
+		}
+	}
+	
+	/**
 	 * Implementation of Map.Entry for use in sorting a DataTable --
 	 * will couple the Object with its index for index tracking in a sort
 	 * @author Taylor G Smith
@@ -540,75 +655,11 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * converted to String.
 	 * @return a string-converted instance of DataColumn
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public final DataColumn<String> asCharacter() {
-		if(contentClass().equals(String.class))
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public final DataColumn<String> asCharacter() {			
+		if(this.contentClass().equals(String.class))
 			return (DataColumn) this;
-		Collection<String> coll = new ArrayList<String>();
-		for(T t : this) {
-			coll.add(t.toString());
-		}
-		DataColumn<String> data = new DataColumn<String>(coll);
-		data.isConvertable = isConvertable;
-		data.checkedForConvertable = checkedForConvertable;
-		data.isNumeric = false;
-		data.checkedForNumericism = false;
-		data.type = String.class;
-		data.conversionType = conversionType;
-		if(widthCalculated) {
-			data.width = width;
-			data.widthCalculated = true;
-		}
-		data.name = name;
-		return data;
-	}
-	
-	/**
-	 * Protected helper methods for DataTable converting items
-	 * to specific TYPES of numeric -- Double
-	 * @return a double-converted DataColumn
-	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private final DataColumn<Double> asDouble() {
-		if(contentClass().equals(Double.class))
-			return (DataColumn) this;
-		ArrayList collection = new ArrayList(this.size());
-		for(T t : this) {
-			String tar = contentClass().equals(String.class) ? (String) t : t.toString();
-			if(MissingValue.isNA(tar))
-				collection.add(new MissingValue());
-			else if(Infinite.isInfinite(tar))
-				collection.add(new Infinite(tar));
-			else collection.add( new Double(tar) );
-		}
-		DataColumn<Double> returnable = new DataColumn<Double>(collection);
-		returnable.type = Double.class;
-		returnable = (DataColumn) asNumericUtilities(returnable, this);
-		return returnable;
-	}
-	
-	/**
-	 * Protected helper methods for DataTable converting items
-	 * to specific TYPES of numeric -- Integer
-	 * @return an integer-converted DataColumn
-	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private final DataColumn<Integer> asInteger() {
-		if(contentClass().equals(Integer.class))
-			return (DataColumn) this;
-		ArrayList collection = new ArrayList(this.size());
-		for(T t : this) {
-			String tar = contentClass().equals(String.class) ? (String) t : t.toString();
-			if(MissingValue.isNA(tar))
-				collection.add(new MissingValue());
-			else if(Infinite.isInfinite(tar))
-				collection.add(new Infinite(tar));
-			else collection.add( new Integer(tar) );
-		}
-		DataColumn<Integer> returnable = new DataColumn<Integer>(collection);
-		returnable.type = Integer.class;
-		returnable = (DataColumn) asNumericUtilities(returnable, this);
-		return returnable;
+		return TypeConversionUtils.asCharacter(this);
 	}
 	
 	/**
@@ -622,35 +673,11 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 			return (DataColumn<? extends Number>) this;
 		else if(isConvertableToNumeric()) {
 			Class<? extends Object> converter = numericConversionType();
-			if(converter.equals(Double.class)) {
-				return asDouble();
-			} else {
-				return asInteger();
-			}
+			//return TypeConversionUtils.asNumeric(this, !converter.equals(Integer.class));
+			return converter.equals(Integer.class) ? 
+					TypeConversionUtils.asInteger(this) : 
+						TypeConversionUtils.asDouble(this);
 		} else throw new NumberFormatException("Cannot parse column to numeric");
-	}
-	
-	/**
-	 * Utilities for when a column is converted to some type of numeric. These are 
-	 * all attributes the new datacolumn will possess post-conversion
-	 * @param returnable
-	 * @param original
-	 * @return the numerically-converted DataColumn with cloned attributes
-	 */
-	private final static DataColumn<?> asNumericUtilities(DataColumn<?> returnable, DataColumn<?> original) {
-		returnable.isNumeric = true;
-		returnable.checkedForNumericism = true;
-		returnable.isConvertable = true;
-		returnable.checkedForConvertable = true;
-		returnable.checkedForNAs = original.checkedForNAs;
-		returnable.containsNAs = original.containsNAs;
-		if(original.widthCalculated) {
-			returnable.width = original.width;
-			returnable.widthCalculated = true;
-		}
-		returnable.conversionType = returnable.type;
-		returnable.name = original.name;
-		return returnable;
 	}
 	
 	/**
@@ -662,7 +689,6 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		isNumeric = false;
 		type = null;
 		conversionType = null;
-		containsNAs = false;
 		width = 0;
 		super.clear();
 	}
