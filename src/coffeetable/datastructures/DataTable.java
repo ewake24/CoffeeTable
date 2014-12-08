@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -436,8 +437,11 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	}
 	
 	public Object clone() {
-		DataTable clone = this;
+		DataTable clone = new DataTable(rows, tableName);
 		clone.options = options;
+		clone.exceptionLog = this.exceptionLog;
+		clone.isRendered = this.isRendered;
+		
 		return clone;
 	}
 	
@@ -1256,6 +1260,22 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 		this.clear();
 		this.addAllRows(numericDCs);
 		this.setColNames(newColNames);
+	}
+	
+	/**
+	 * Removes all duplicate rows from the DataTable
+	 * @return an instance of DataTable identical to the current instance but
+	 * without any duplicate rows
+	 */
+	public DataTable unique() {
+		LinkedHashSet<DataRow> lhs = new LinkedHashSet<DataRow>(rows);
+		DataTable dt = new DataTable(lhs, tableName);
+		
+		dt.options = this.options;
+		dt.isRendered = this.isRendered;
+		dt.exceptionLog = this.exceptionLog;
+		
+		return dt;
 	}
 	
 	private Schema updateSchema(Class<? extends Object> appendable) {
