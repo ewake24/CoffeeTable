@@ -32,6 +32,11 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 		name = "DataRow";
 	}
 	
+	public DataRow(int initSize, String name) {
+		this(initSize);
+		setName(name);
+	}
+	
 	public DataRow() {
 		/* Init methods if any */
 		this(15);
@@ -51,6 +56,23 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 	public DataRow(String name) {
 		this();
 		setName(name);
+	}
+	
+	/**
+	 * Inner class used for transforming a DataRow to a DataColumn --
+	 * identifies the highest convertable class for the row
+	 * @author Taylor G Smith
+	 */
+	final static class HighestConvertableClassHierarchy {
+		public static Class<?> highestCommonConvertableClass(Schema sch) {
+			if(sch.isEmpty())
+				return null;
+			if(!sch.isNumeric())
+				return String.class;
+			else if(sch.contains(Double.class))
+				return Double.class;
+			return Integer.class;
+		}
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -258,15 +280,28 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 	}
 	
 	/**
-	 * Will convert the DataRow to DataColumn
+	 * Will convert the DataRow to DataColumn of the highest convertable class
 	 * @return a DataColumn-transformed DataRow
 	 */
+	@SuppressWarnings("unchecked")
 	public DataColumn toDataColumn() {
 		if(typeSafetyList().isSingular()) {
 			//DataColumn d = new DataColumn( Arrays.asList(super.toArray()) , name );
-			DataColumn d = new DataColumn(this);
+			DataColumn d = new DataColumn(this,name);
 			return d;
-		} else throw new SchemaMismatchException("Cannot convert DataRow of multiple class types to DataColumn");
+		}
+		
+		Class<?> convertable = HighestConvertableClassHierarchy.highestCommonConvertableClass(schema);
+		DataRow newDR = new DataRow(this.size(),name);
+		for(Object o : this) {
+			String os = o.toString();
+			newDR.add(
+				convertable == String.class ? os :
+					convertable == Double.class ? new Double(os) :
+						new Integer(os)
+			);
+		}
+		return new DataColumn(newDR,name);
 	}
 	
 	public String toString() {

@@ -525,6 +525,19 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	}
 	
 	/**
+	 * Will remove all rows containing any TheoreticalValue.class objects
+	 */
+	public void completeCases() {
+		for(int i = 0; i < rows.size(); i++) {
+			if(i >= rows.size())
+				break;
+			
+			if(rows.get(i).containsNA())
+				this.removeRow(i--);
+		}
+	}
+	
+	/**
 	 * Will convert all columns in the datatable to String type
 	 * @return true if the conversion was properly completed
 	 */
