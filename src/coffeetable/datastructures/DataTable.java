@@ -153,7 +153,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * If a non-numeric column is identified, String.class will be returned.
 	 * @author Taylor G Smith
 	 */
-	private final static class NumericClassHierarchy {
+	final static class NumericClassHierarchy {
 		public static Class<?> highestCommonConvertableClass(Collection<DataColumn> coll) {
 			if(coll.isEmpty())
 				return null;
@@ -179,7 +179,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * option setter method in the class body (disambiguation)
 	 * @author Taylor G Smith
 	 */
-	private static class Options {
+	final static class Options {
 		public static HashMap<String,Integer> setOptions() {
 			HashMap<String, Integer> options = new HashMap<String,Integer>();
 			options.put("max.print", 10000);	//What point the print-to-console cuts off
@@ -313,6 +313,18 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 		private static void schemaAssignment(DataTable table, DataRow row) {
 			if(null == table.schema || table.rows.isEmpty())
 				table.schema = row.schema();
+		}
+	}
+	
+	final static class SubsettableConditions {
+		static boolean inRange_col(DataTable dt, int bottom, int top, boolean inclusive) {
+			return inclusive ? (bottom >= 0) && (top <= dt.cols.size()-1) && (bottom <= top) :
+						(bottom >= -1) && (top <= dt.cols.size()) && (bottom < top) && (top-bottom>1); //Must be at least one between them
+		}
+		
+		static boolean inRange_row(DataTable dt, int bottom, int top, boolean inclusive) {
+			return inclusive ? (bottom >= 0) && (top <= dt.rows.size()-1) && (bottom <= top) :
+						(bottom >= -1) && (top <= dt.rows.size()) && (bottom < top) && (top-bottom>1); //Must be at least one between them
 		}
 	}
 	
@@ -752,16 +764,6 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 		return rows.indexOf(row);
 	}
 	
-	private final boolean inRange_col(int bottom, int top, boolean inclusive) {
-		return inclusive ? (bottom >= 0) && (top <= cols.size()-1) && (bottom <= top) :
-					(bottom >= -1) && (top <= cols.size()) && (bottom < top) && (top-bottom>1); //Must be at least one between them
-	}
-	
-	private final boolean inRange_row(int bottom, int top, boolean inclusive) {
-		return inclusive ? (bottom >= 0) && (top <= rows.size()-1) && (bottom <= top) :
-					(bottom >= -1) && (top <= rows.size()) && (bottom < top) && (top-bottom>1); //Must be at least one between them
-	}
-	
 	/**
 	 * Returns whether the table is empty
 	 * @return false if the table contains data, true otherwise
@@ -968,7 +970,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @param inclusive - whether the lo/hi params are inclusive
 	 */
 	public final void removeColumnRange(int lo, int hi, boolean inclusive) {
-		if(!inRange_col(lo,hi,inclusive))
+		if(!SubsettableConditions.inRange_col(this,lo,hi,inclusive))
 			throw new IllegalArgumentException("Out of range");
 		int colsToRemove = inclusive ? ((hi+1)-(lo+1))+1 : ((hi+1)-(lo+1))-1;
 		int index = 0;
@@ -1003,7 +1005,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @param inclusive - whether the lo/hi params are inclusive
 	 */
 	public final void removeRowRange(int lo, int hi, boolean inclusive) {
-		if(!inRange_row(lo,hi,inclusive))
+		if(!SubsettableConditions.inRange_row(this,lo,hi,inclusive))
 			throw new IllegalArgumentException("Out of range");
 		int rowsToRemove = inclusive ? ((hi+1)-(lo+1))+1 : ((hi+1)-(lo+1))-1;
 		int index = 0;
@@ -1280,6 +1282,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 		return list;
 	}
 	
+	/* ---------- Table writing operations ---------- */
 	/**
 	 * Writes a serialized DataTable object from this instance,
 	 * returns true if successful
@@ -1301,9 +1304,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 		fileOut.close();
 		return new File(path).exists();
 	}
-
 	
-	/* ---------- Table writing operations ---------- */
 	/**
 	 * Writes a delimited file (.csv, .txt, etc.)
 	 * @param file
