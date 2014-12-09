@@ -139,7 +139,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		/**
 		 * Comparator for sorting a column by double value
 		 */
-		private final static Comparator<String> compar = new Comparator<String>() {
+		private static Comparator<String> compar = new Comparator<String>() {
 			public int compare(String arg0, String arg1) {
 				return Double.valueOf(Double.parseDouble(arg0)).compareTo(Double.valueOf(Double.parseDouble(arg1)));
 			};
@@ -148,7 +148,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		/**
 		 * Comparator for sorting a column based on object frequency
 		 */
-		private final static Comparator<Map.Entry<Object,Integer>> freqCompar = new Comparator<Map.Entry<Object,Integer>>() {
+		private static Comparator<Map.Entry<Object,Integer>> freqCompar = new Comparator<Map.Entry<Object,Integer>>() {
 			public int compare(Map.Entry<Object,Integer> arg0, Map.Entry<Object,Integer> arg1) {
 				return arg0.getValue().compareTo(arg1.getValue());
 			}
@@ -449,7 +449,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		 * converted to String.
 		 * @return a string-converted instance of DataColumn
 		 */
-		public final static <T extends Comparable<? super T>> DataColumn<String> asCharacter(DataColumn<T> arg0) {
+		public static <T extends Comparable<? super T>> DataColumn<String> asCharacter(DataColumn<T> arg0) {
 			Collection<String> coll = new ArrayList<String>();
 			for(T t : arg0) {
 				coll.add(t.toString());
@@ -476,7 +476,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		 * @param original
 		 * @return the numerically-converted DataColumn with cloned attributes
 		 */
-		private final static <T extends Comparable<? super T>> DataColumn<? extends Number> asNumericUtilities(DataColumn<? extends Number> returnable, DataColumn<T> original) {
+		private static <T extends Comparable<? super T>> DataColumn<? extends Number> asNumericUtilities(DataColumn<? extends Number> returnable, DataColumn<T> original) {
 			returnable.isNumeric = true;
 			returnable.checkedForNumericism = true;
 			returnable.isConvertable = true;
@@ -538,7 +538,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * @param <K>
 	 * @param <V>
 	 */
-	private final class SortableEntry<K,V> implements Map.Entry<K,V> {
+	private class SortableEntry<K,V> implements Map.Entry<K,V> {
 		private final K key;
 		private V value;
 		
@@ -568,7 +568,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * @param element
 	 * @return true if successfully added
 	 */
-	protected boolean addFromTrusted(T element) {
+	protected final boolean addFromTrusted(T element) {
 		return super.add(element);
 	}
 	
@@ -577,7 +577,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * @param element
 	 * @param index
 	 */
-	protected void addFromTrusted(T element, int index) {
+	protected final void addFromTrusted(T element, int index) {
 		super.add(index, element);
 	}
 	
@@ -585,7 +585,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * Adds the given object to the DataColumn
 	 * @return true if successfully added
 	 */
-	public boolean add(T element) {
+	public final boolean add(T element) {
 		if(!this.isEmpty())
 			if(!ensureTypeSafety(element))
 				throw new SchemaMismatchException("Argument class does not match column class type");
@@ -597,7 +597,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * Adds the given object to the DataColumn at the 
 	 * specified index
 	 */
-	public void add(int index, T element) {
+	public final void add(int index, T element) {
 		if(!this.isEmpty())
 			if(!ensureTypeSafety(element))
 				throw new SchemaMismatchException("Argument class does not match column class type");
@@ -609,7 +609,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * Adds the given collection of objects to the DataColumn
 	 * @return true if successfully added
 	 */
-	public boolean addAll(Collection<? extends T> arg0) {
+	public final boolean addAll(Collection<? extends T> arg0) {
 		if(!ensureTypeSafety(arg0))
 			throw new SchemaMismatchException("Argument class does not match column class type");
 		columnUpdate();
@@ -620,7 +620,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * Adds the given collection of objects to the DataColumn
 	 * beginning at the specified index
 	 */
-	public boolean addAll(int index, Collection<? extends T> arg1) {
+	public final boolean addAll(int index, Collection<? extends T> arg1) {
 		if(!ensureTypeSafety(arg1))
 			throw new SchemaMismatchException("Argument class does not match column class type");
 		columnUpdate();
@@ -673,7 +673,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	/**
 	 * Will reset this instance to default but will retain the column name
 	 */
-	public void clear() {
+	public final void clear() {
 		columnUpdate(); //Takes care of a few
 		isConvertable = false;
 		isNumeric = false;
@@ -749,7 +749,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * Will return whether the column contains
 	 * ANY theoretical values (NA, Infinite or NaN)
 	 */
-	public boolean containsNA() {
+	public final boolean containsNA() {
 		if(containsNAs)
 			return true;
 		if(this.isEmpty())
@@ -769,7 +769,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * Will return the Class of the objects held within the column
 	 * @return the class of the column contents
 	 */
-	public Class<?> contentClass() {
+	public final Class<?> contentClass() {
 		if(!(null==type))
 			return type;
 		else if(this.isEmpty())
@@ -788,7 +788,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * Will count the number of theoretical values (NA, Infinite, NaN)
 	 * within the column
 	 */
-	public int countMissingValues() {
+	public final int countMissingValues() {
 		if(this.isEmpty())
 			return 0;
 		else if(!containsNA())
@@ -807,7 +807,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * @param element
 	 * @return whether classes are typesafe
 	 */
-	private final boolean ensureTypeSafety(Object element) {
+	private boolean ensureTypeSafety(Object element) {
 		/* Shouldn't be empty if this is called due to checking
 		 * at other stages, but this is just in case..... */
 		if(this.isEmpty()) {
@@ -827,7 +827,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * @param element
 	 * @return whether classes are typesafe
 	 */
-	private final boolean ensureTypeSafety(Collection<? extends T> element) {
+	private boolean ensureTypeSafety(Collection<? extends T> element) {
 		if(!this.isEmpty()) {
 			for(Object e : element) {
 				if(!ensureTypeSafety(e))
@@ -866,7 +866,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * @return vector similarity
 	 */
 	@SuppressWarnings("rawtypes")
-	public double euclideanDistance(DataColumn arg0) {
+	public final double euclideanDistance(DataColumn arg0) {
 		return ArithmeticOperations.euclideanDistance(this, arg0);
 	}
 	
@@ -889,7 +889,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * @return inner product
 	 */
 	@SuppressWarnings("rawtypes")
-	public double innerProduct(DataColumn arg0) {
+	public final double innerProduct(DataColumn arg0) {
 		return ArithmeticOperations.innerProduct(this, arg0);
 	}
 	
@@ -898,7 +898,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * (either Integer or Double)
 	 * @return whether the DataColumn can be converted to a numeric type
 	 */
-	public boolean isConvertableToNumeric() {
+	public final boolean isConvertableToNumeric() {
 		if(isNumeric()) {
 			checkedForConvertable = true;
 			isConvertable = true;
@@ -921,7 +921,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * numeric type (assignable from Number.class)
 	 * @return whether the column is numeric
 	 */
-	public boolean isNumeric() {
+	public final boolean isNumeric() {
 		if(!checkedForNumericism) {
 			if(this.isEmpty())
 				return false;
@@ -937,7 +937,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * Sorts the actual map entries
 	 * @return a comparator to sort a collection of map entries
 	 */
-	private final Comparator<Map.Entry<T,Integer>> mapEntrySorter() {
+	private Comparator<Map.Entry<T,Integer>> mapEntrySorter() {
 		return new Comparator<Map.Entry<T,Integer>>() {
 			@Override
 			public int compare(Map.Entry<T,Integer> s1, Map.Entry<T,Integer> s2) {
@@ -962,7 +962,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * CONVERTABLE to a numeric type
 	 * @return mean of column
 	 */
-	public double mean() {
+	public final double mean() {
 		return ArithmeticOperations.mean(this);
 	}
 	
@@ -989,7 +989,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	/**
 	 * Returns the name of the DataColumn ('DataColumn' if not set)
 	 */
-	public final String name() {
+	public String name() {
 		return name;
 	}
 	
@@ -1005,7 +1005,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * higher -- this is a beta feature right now.
 	 * @return the class the column will convert to if called 'asNumeric()'
 	 */
-	protected Class<?> numericConversionType() {
+	protected final Class<?> numericConversionType() {
 		if(isNumeric())						//The generic type was declared so we know it
 			return type;
 		else if(!(null == conversionType))	//We have already found the type
@@ -1030,11 +1030,11 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		}
 	}
 	
-	private final boolean numberCouldBeInteger(String ts) {
+	private boolean numberCouldBeInteger(String ts) {
 		return ts.matches("-?[0-9]+"); // << Should handle everything
 	}
 	
-	private final boolean numberCouldBeDouble(String ts) {
+	private boolean numberCouldBeDouble(String ts) {
 		return ts.matches("[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?");
 				//ts.matches("-?\\d|\\.+(\\d+)?+[eE][-+]?\\d");
 	}
@@ -1055,7 +1055,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	/**
 	 * Removes the object from the DataColumn
 	 */
-	public boolean remove(Object arg0) {
+	public final boolean remove(Object arg0) {
 		if(this.size()==1) {
 			clear();
 			return true;
@@ -1067,7 +1067,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	/**
 	 * Removes the object at the corresponding index
 	 */
-	public T remove(int index) {
+	public final T remove(int index) {
 		if(this.size()==1) {
 			T holdover = super.remove(index);
 			clear();
@@ -1081,7 +1081,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * Removes all objects within the parameter 
 	 * collection from the DataColumn
 	 */
-	public boolean removeAll(Collection<?> arg0) {
+	public final boolean removeAll(Collection<?> arg0) {
 		if(this.size()==1) {
 			clear();
 			return true;
@@ -1094,7 +1094,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * Renders the DataColumn for printing within a DataTable.
 	 * This is to identify the width of the column for spacing
 	 */
-	private final void render() {
+	private void render() {
 		width = sortByLength();
 		widthCalculated = true;
 	}
@@ -1104,7 +1104,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * returns the appropriate value for sorting
 	 * @return
 	 */
-	private final int returnInComparator(T s1, T s2) {
+	private int returnInComparator(T s1, T s2) {
 		boolean s1NA = MissingValue.isNA(s1);
 		boolean s2NA = MissingValue.isNA(s2);
 		boolean s1Inf = Infinite.isInfinite(s1);
@@ -1133,7 +1133,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	/**
 	 * Sets the corresponding index to the passed-in Object
 	 */
-	public T set(int index, T element) {
+	public final T set(int index, T element) {
 		if(this.size() > 0)
 			if(!ensureTypeSafety(element))
 				throw new SchemaMismatchException("Element type does not match column type");
@@ -1166,7 +1166,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	}
 	
 	@SuppressWarnings("unchecked")
-	public DataColumn<Double> scaleByFactor(double scalar) {
+	public final DataColumn<Double> scaleByFactor(double scalar) {
 		return ArithmeticOperations.scaleByFactor(this,scalar);
 	}
 
@@ -1174,7 +1174,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * Generate item : index list of map entries
 	 * @return a list of map entries (Object : index in column)
 	 */
-	private final List<Map.Entry<T,Integer>> sortableMapEntries() {
+	private List<Map.Entry<T,Integer>> sortableMapEntries() {
 		int index = 0;
 		List<Map.Entry<T,Integer>> returnable = new ArrayList<Map.Entry<T,Integer>>();
 		for(T t : this)
@@ -1187,20 +1187,20 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * @param sorted
 	 * @return the indices of sorted objects
 	 */
-	private final List<Integer> sortedMapEntryValues(List<Map.Entry<T,Integer>> sorted) {
+	private List<Integer> sortedMapEntryValues(List<Map.Entry<T,Integer>> sorted) {
 		List<Integer> arr = new ArrayList<Integer>();
 		for(Map.Entry<T,Integer> o : sorted)
 			arr.add(o.getValue());
 		return arr;
 	}
 	
-	protected List<Integer> sortedAscendingMapEntries() {
+	protected final List<Integer> sortedAscendingMapEntries() {
 		List<Map.Entry<T,Integer>> sortables = sortableMapEntries();
 		Collections.sort(sortables, mapEntrySorter());
 		return sortedMapEntryValues(sortables);
 	}
 	
-	protected List<Integer> sortedDescendingMapEntries() {
+	protected final List<Integer> sortedDescendingMapEntries() {
 		List<Map.Entry<T,Integer>> sortables = sortableMapEntries();
 		Collections.sort(sortables, mapEntrySorter());
 		Collections.reverse(sortables);
@@ -1211,7 +1211,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * To be used with render() -- this sorts the column by string length
 	 * @return the highest length item in the column
 	 */
-	private final int sortByLength() {
+	private int sortByLength() {
 		ArrayList<T> l = new ArrayList<T>(this);
 		Collections.sort(l, comparator);
 		int max = l.get(l.size() - 1).toString().length();
@@ -1224,7 +1224,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * HIGH otherwise.
 	 * @return a comparator to sort the column by object length
 	 */
-	private final Comparator<T> sortableComparator() {
+	private Comparator<T> sortableComparator() {
 		return new Comparator<T>() {
 			@Override
 			public int compare(T s1, T s2) {
@@ -1235,14 +1235,14 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	/**
 	 * Sorts the DataColumn ascending (NAs low)
 	 */
-	protected void sortAscending() {
+	protected final void sortAscending() {
 		Collections.sort(this, sortableComparator());
 	}
 	
 	/**
 	 * Sorts the DataColumn descending (NAs high)
 	 */
-	protected void sortDescending() {
+	protected final void sortDescending() {
 		Collections.sort(this, Collections.reverseOrder(sortableComparator()));
 	}
 	
@@ -1252,11 +1252,11 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * CONVERTABLE to a numeric type
 	 * @return standard deviation of column
 	 */
-	public double standardDeviation() {
+	public final double standardDeviation() {
 		return ArithmeticOperations.standardDeviation(this);
 	}
 	
-	public DataColumn<T> subsetByCondition(SubsettableCondition sub) {
+	public final DataColumn<T> subsetByCondition(SubsettableCondition sub) {
 		boolean[] keeps = subsetLogicalVector(sub);
 		
 		DataColumn<T> dc = new DataColumn<T>(new ArrayList<T>(this), this.name+"_Subset");
@@ -1270,7 +1270,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		return dc;
 	}
 	
-	public boolean[] subsetLogicalVector(SubsettableCondition sub) {
+	public final boolean[] subsetLogicalVector(SubsettableCondition sub) {
 		return sub.evaluate(this);
 	}
 	
@@ -1280,7 +1280,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * either NOT NUMERIC or NOT CONVERTABLE to a numeric type
 	 * @return sum of column
 	 */
-	public double sum() {
+	public final double sum() {
 		return ArithmeticOperations.sum(this);
 	}
 	
@@ -1304,7 +1304,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * Converts the column to an instance of DataRow
 	 * @return the column parsed to DataRow
 	 */
-	public DataRow toDataRow() {
+	public final DataRow toDataRow() {
 		DataRow d = new DataRow(this,name);
 		return d;
 	}
@@ -1326,7 +1326,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * CONVERTABLE to a numeric type
 	 * @return variance of column
 	 */
-	public double variance() {
+	public final double variance() {
 		return ArithmeticOperations.variance(this);
 	}
 	
@@ -1334,7 +1334,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * The width of the longest element in the DataColumn (for spacing purposes)
 	 * @return widest element in column (for print rendering)
 	 */
-	public int width() {
+	public final int width() {
 		if(!widthCalculated)
 			render();
 		return width;

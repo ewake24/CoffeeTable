@@ -335,7 +335,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * everything is read in as a String schema
 	 * @param row
 	 */
-	protected void addRowFromCsvParser(DataRow row) {
+	protected final void addRowFromCsvParser(DataRow row) {
 		ContentFactory.schemaAssignment(this, row);
 		rows.add(row);
 		if(cols.isEmpty())
@@ -347,7 +347,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * Add a collection of DataColumns to the DataTable
 	 * @param columns
 	 */
-	public void addAllColumns(Collection<DataColumn> columns) {
+	public final void addAllColumns(Collection<DataColumn> columns) {
 		for(DataColumn col : columns)
 			this.addColumn(col);
 	}
@@ -356,7 +356,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * Add a collection of DataRows to the DataTable
 	 * @param rows
 	 */
-	public void addAllRows(Collection<DataRow> rows) {
+	public final void addAllRows(Collection<DataRow> rows) {
 		for(DataRow row : rows)
 			this.addRow(row);
 	}
@@ -365,7 +365,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * Add a single DataRow to the DataTable
 	 * @param row
 	 */
-	public void addRow(DataRow row) {
+	public final void addRow(DataRow row) {
 		tableUpdate();
 		ContentFactory.schemaAssignment(this,row);
 		if(!schemaIsSafe(row.schema()))
@@ -381,7 +381,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @param index
 	 * @param row
 	 */
-	public void addRow(int index, DataRow row) {
+	public final void addRow(int index, DataRow row) {
 		tableUpdate();
 		if(rows.isEmpty() || null == schema || index==rows.size()) {
 			addRow(row); return;
@@ -397,7 +397,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * Add a single DataColumn to the DataTable
 	 * @param col
 	 */
-	public void addColumn(DataColumn<?> col) {
+	public final void addColumn(DataColumn<?> col) {
 		tableUpdate();
 		if(cols.isEmpty() || null==schema)
 			schema = updateSchemaFromNew(col.contentClass());
@@ -414,7 +414,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @param index
 	 * @param col
 	 */
-	public void addColumn(int index, DataColumn<?> col) {
+	public final void addColumn(int index, DataColumn<?> col) {
 		tableUpdate();
 		if(cols.isEmpty() || null==schema || index==cols.size()) {
 			addColumn(col); return;
@@ -429,7 +429,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	/**
 	 * Clears all data from the DataTable, but retains the name
 	 */
-	public void clear() {
+	public final void clear() {
 		tableUpdate();
 		cols = new ArrayList<DataColumn>();
 		rows = new ArrayList<DataRow>();
@@ -448,7 +448,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	/**
 	 * Returns true if the DataTable contains any NA values
 	 */
-	public boolean containsNA() {
+	public final boolean containsNA() {
 		if(cols.isEmpty())
 			return false;
 		for(DataColumn c : cols) {
@@ -461,7 +461,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	/**
 	 * Returns the number of MissingValues in the table
 	 */
-	public int countMissingValues() {
+	public final int countMissingValues() {
 		if(this.isEmpty())
 			return 0;
 		int sum = 0;
@@ -477,7 +477,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @return a numeric version of the column
 	 */
 	@SuppressWarnings("unchecked")
-	public static DataColumn<? extends Number> castColumnAsNumeric(DataColumn col) {
+	public final static DataColumn<? extends Number> castColumnAsNumeric(DataColumn col) {
 		return (DataColumn<? extends Number>) col.asNumeric();
 	}
 	
@@ -487,11 +487,11 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @return the passed in column in String version
 	 */
 	@SuppressWarnings("unchecked")
-	public static DataColumn<String> castColumnAsString(DataColumn col) {
+	public final static DataColumn<String> castColumnAsString(DataColumn col) {
 		return (DataColumn<String>) col.asCharacter();
 	}
 	
-	public void clearColumnCaches() {
+	public final void clearColumnCaches() {
 		//Reset column caches
 		for(DataColumn c : cols)
 			c.columnUpdate();
@@ -513,7 +513,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * Returns a collection of the DataTable's columns
 	 * @return collection of the DataTable's columns
 	 */
-	public Collection<DataColumn> columns() {
+	public final Collection<DataColumn> columns() {
 		return cols;
 	}
 	
@@ -524,7 +524,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * For a static version of the method, use columnAsNumeric.
 	 * @param col
 	 */
-	public void convertColumnToNumeric(DataColumn col) {
+	public final void convertColumnToNumeric(DataColumn col) {
 		DataColumn<? extends Number> target = castColumnAsNumeric(col);
 		this.setColumn(indexOf(col), target);
 	}
@@ -535,7 +535,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * For a static version of the method, use columnAsString.
 	 * @param col
 	 */
-	public void convertColumnToString(DataColumn col) {
+	public final void convertColumnToString(DataColumn col) {
 		DataColumn<String> target = castColumnAsString(col);
 		this.setColumn(indexOf(col), target);
 	}
@@ -543,7 +543,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	/**
 	 * Will remove all rows containing any TheoreticalValue.class objects
 	 */
-	public void completeCases() {
+	public final void completeCases() {
 		for(int i = 0; i < rows.size(); i++) {
 			if(i >= rows.size())
 				break;
@@ -557,7 +557,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * Will convert all columns in the datatable to String type
 	 * @return true if the conversion was properly completed
 	 */
-	public boolean convertTableToCharacter() {
+	public final boolean convertTableToCharacter() {
 		if(this.isEmpty())
 			return false;
 		ArrayList<DataColumn> oldCols = new ArrayList<DataColumn>(cols);
@@ -574,7 +574,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * Will attempt to convert all contents of the table to numeric.
 	 * @return true if successful, false otherwise.
 	 */
-	public boolean convertTableToNumeric() {
+	public final boolean convertTableToNumeric() {
 		if(this.isEmpty())
 			return false;
 		Class<?> converter = NumericClassHierarchy.highestCommonConvertableClass(cols);
@@ -621,7 +621,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @param colEnd - col at which to end subset (inclusive)
 	 * @return a copy of the current instance of DataTable diced at the given boundaries
 	 */
-	public DataTable dice(int rowStart, int rowEnd, int colStart, int colEnd) {
+	public final DataTable dice(int rowStart, int rowEnd, int colStart, int colEnd) {
 		DataTable newdata = new DataTable();
 		newdata.rows = rows;
 		newdata.cols = cols;
@@ -671,7 +671,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * enabled in the CsvParser)
 	 * @return an ArrayList of exceptions the DataTable has encountered
 	 */
-	public ArrayList<Exception> exceptionLog() {
+	public final ArrayList<Exception> exceptionLog() {
 		return exceptionLog;
 	}
 	
@@ -698,7 +698,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @param option
 	 * @return the option parameter with the given name (ex: "max.print")
 	 */
-	public Integer getOption(String option) {
+	public final Integer getOption(String option) {
 		if(!options.containsKey(option))
 			return null;
 		else return options.get(option);
@@ -711,7 +711,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * method will allow setting of option parameters
 	 * @return the DataTable's valid, settable options
 	 */
-	public Set<String> getOptionKeys() {
+	public final Set<String> getOptionKeys() {
 		return options.keySet();
 	}
 	
@@ -807,7 +807,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @return a new instance of DataTable
 	 * @throws IOException
 	 */
-	public static DataTable newFromFile(File file, String delimiter, boolean headers, 
+	public final static DataTable newFromFile(File file, String delimiter, boolean headers, 
 			boolean detectNumeric, boolean renderstate) throws IOException {
 		CsvParser csv = new CsvParser(file, delimiter, headers);
 		if(!detectNumeric)
@@ -822,7 +822,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * Return the number of columns in the table
 	 * @return number of cols in the table
 	 */
-	public int ncol() {
+	public final int ncol() {
 		return cols.size();
 	}
 	
@@ -830,14 +830,14 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * Return the number of rows in the table
 	 * @return number of rows in the table
 	 */
-	public int nrow() {
+	public final int nrow() {
 		return rows.size();
 	}
 	
 	/**
 	 * Render the DataTable in the console
 	 */
-	public void print() {
+	public final void print() {
 		printHead(rows.size());
 	}
 	
@@ -845,7 +845,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * Print the first n rows of the DataTable where n
 	 * is defined by getOption("default.head")
 	 */
-	public void printHead() {
+	public final void printHead() {
 		printHead( options.get("default.head") );
 	}
 	
@@ -854,7 +854,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * is defined by the parameter, rows
 	 * @param rows - the number of rows to render
 	 */
-	public void printHead(int rows) {
+	public final void printHead(int rows) {
 		if(rows > this.rows.size())
 			rows = this.rows.size();
 		printTable(rows);
@@ -952,7 +952,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @param arg0
 	 * @return the removed DataColumn
 	 */
-	public DataColumn removeColumn(int arg0) {
+	public final DataColumn removeColumn(int arg0) {
 		if( !(cols.size() > arg0) )
 			throw new NullPointerException();
 		if( cols.size() == 1 ) {
@@ -988,7 +988,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @param arg0
 	 * @return the removed DataRow
 	 */
-	public DataRow removeRow(int arg0) {
+	public final DataRow removeRow(int arg0) {
 		if( !(rows.size() > arg0) )
 			throw new NullPointerException();
 		if( rows.size() == 1 ) {
@@ -1028,7 +1028,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * as a non-essential method because the presence of TheoreticalValues in the individual
 	 * DataRow schemas is not an issue in the table determining the proper schema.
 	 */
-	public void renderState() {
+	public final void renderState() {
 		if(isRendered)
 			return;
 		for(DataRow row : rows)
@@ -1069,7 +1069,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @param sch
 	 * @return whether an addition can be made
 	 */
-	private final boolean schemaIsSafe(Schema sch) {
+	private boolean schemaIsSafe(Schema sch) {
 		return schema.isSafe(sch);
 	}
 	
@@ -1082,7 +1082,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @return the old Object
 	 */
 	@SuppressWarnings("unchecked")
-	public Object set(int rowIndex, int colIndex, Object o) {
+	public final Object set(int rowIndex, int colIndex, Object o) {
 		Object old;
 		old = cols.get(colIndex).set(rowIndex, o);
 		rows.get(rowIndex).set(colIndex, o);
@@ -1095,7 +1095,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @param newCol
 	 * @return the removed/old column at the specified index
 	 */
-	public DataColumn setColumn(int index, DataColumn newCol) {
+	public final DataColumn setColumn(int index, DataColumn newCol) {
 		if(newCol.isEmpty() || newCol.size() != this.nrow())
 			throw new DimensionMismatchException();
 		
@@ -1110,7 +1110,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @param newRow
 	 * @return the removed/old row from the specified index
 	 */
-	public DataRow setRow(int index, DataRow newRow) {
+	public final DataRow setRow(int index, DataRow newRow) {
 		if(newRow.isEmpty() || newRow.size() != this.ncol())
 			throw new DimensionMismatchException();
 		
@@ -1153,7 +1153,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @param num
 	 * @return the set option parameter or zero for failure
 	 */
-	public Integer setOptions(String option, Integer num) {
+	public final Integer setOptions(String option, Integer num) {
 		if(!options.containsKey(option))
 			return 0;
 		else if(num < 1)
@@ -1184,7 +1184,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * Sort the entire DataTable in order of a DataColumn sorted ascending
 	 * @param col
 	 */
-	public void sortAscending(DataColumn col) {
+	public final void sortAscending(DataColumn col) {
 		if(!cols.contains(col))
 			throw new IllegalArgumentException("Column does not exist");
 		TableRowSorter.sortRowsAscending(col, this);
@@ -1194,7 +1194,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * Sort the entire DataTable in order of a DataColumn sorted descending
 	 * @param col
 	 */
-	public void sortDescending(DataColumn col) {
+	public final void sortDescending(DataColumn col) {
 		if(!cols.contains(col))
 			throw new IllegalArgumentException("Column does not exist");
 		TableRowSorter.sortRowsDescending(col, this);
@@ -1207,7 +1207,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @param sub
 	 * @return a subset DataTable that meets the conditions in the SubsettableCondition class
 	 */
-	public DataTable subsetByCondition(DataColumn eval, SubsettableCondition sub) {
+	public final DataTable subsetByCondition(DataColumn eval, SubsettableCondition sub) {
 		if(!cols.contains(eval))
 			throw new IllegalArgumentException("Specified column not found in table");
 		boolean[] keeps = eval.subsetLogicalVector(sub);
@@ -1239,7 +1239,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	/**
 	 * Matrix-transform the DataTable
 	 */
-	public void transform() {
+	public final void transform() {
 		if(this.isEmpty())
 			throw new NullPointerException();
 		Class<?> converter = null;
@@ -1333,7 +1333,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @param rownames
 	 * @return true if successful
 	 */
-	public boolean writeToFile(File file, String delimiter, boolean headers, boolean rownames) {
+	public final boolean writeToFile(File file, String delimiter, boolean headers, boolean rownames) {
 		DataTableWriter dtw = new DataTableWriter(this, file, delimiter, headers, rownames);
 		try {
 			return dtw.write();
@@ -1351,7 +1351,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @param file
 	 * @return true if successful
 	 */
-	public boolean writeToHtml(File file) {
+	public final boolean writeToHtml(File file) {
 		return writeToHtmlPrivate(new HtmlTableWriter(this,file));
 	}
 	
@@ -1360,7 +1360,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @param html - HtmlTableWriter object
 	 * @return true if successful
 	 */
-	public boolean writeToHtml(HtmlTableWriter html) {
+	public final boolean writeToHtml(HtmlTableWriter html) {
 		html.setTable(this); //Ensure this table will be written
 		return writeToHtmlPrivate(html);
 	}

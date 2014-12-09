@@ -76,39 +76,39 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 	}
 	
 	@SuppressWarnings("unchecked")
-	public boolean addFromTrusted(Object element) {
+	public final boolean addFromTrusted(Object element) {
 		return super.add(element);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public boolean add(Object element) {
+	public final boolean add(Object element) {
 		rowUpdate();
 		return super.add(element);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public void add(int index, Object element) {
+	public final void add(int index, Object element) {
 		rowUpdate();
 		super.add(index, element);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public boolean addAll(Collection arg0) {
+	public final boolean addAll(Collection arg0) {
 		rowUpdate();
 		return super.addAll(arg0);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public boolean addAll(int index, Collection arg1) {
+	public final boolean addAll(int index, Collection arg1) {
 		rowUpdate();
 		return super.addAll(index, arg1);
 	}
 	
-	public void clear() {
+	public final void clear() {
 		schema = null;
 	}
 	
-	public boolean containsNA() {
+	public final boolean containsNA() {
 		/* Originally returned schema.containsNAs() but if the 
 		 * DataTable is rendered, the schema will no longer contain
 		 * NAs. */
@@ -121,7 +121,7 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 		return false;
 	}
 	
-	public int countMissingValues() {
+	public final int countMissingValues() {
 		/* Don't call containsNA() because then have to loop through
 		 * twice. */
 		if(this.isEmpty())
@@ -197,24 +197,24 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 	/**
 	 * Removes the object from the DataColumn
 	 */
-	public boolean remove(Object arg0) {
+	public final boolean remove(Object arg0) {
 		rowUpdate();
 		return super.remove(arg0);
 	}
 	
-	public Object remove(int index) {
+	public final Object remove(int index) {
 		rowUpdate();
 		return super.remove(index);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public boolean removeAll(Collection arg0) {
+	public final boolean removeAll(Collection arg0) {
 		rowUpdate();
 		return super.removeAll(arg0);
 	}
 	
 	
-	private final void rowUpdate() {
+	private void rowUpdate() {
 		schema = null;
 		schemaFound = false;
 	}
@@ -222,7 +222,7 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 	/**
 	 * returns the schema of the DataRow
 	 */
-	public Schema schema() {
+	public final Schema schema() {
 		if(!(null == schema) && schemaFound)
 			return schema;
 		return typeSafetyList();
@@ -252,7 +252,7 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 	 * @param index - the index at which to set a new value
 	 * @return the old value of the specified index
 	 */
-	public Object set(int index, Object element) {
+	public final Object set(int index, Object element) {
 		if(!schemaCheck(element, index))
 			throw new SchemaMismatchException("New object does not match schema");
 		//Don't need to do the "RowUPdate()" because already customly checking schema changes here
@@ -272,7 +272,7 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 	 * within the schema
 	 * @param sch
 	 */
-	protected void setSchema(Schema sch) {
+	protected final void setSchema(Schema sch) {
 		if(sch.isEmpty())
 			return;
 		schema = sch;
