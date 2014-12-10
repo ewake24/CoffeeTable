@@ -6,7 +6,7 @@ import java.util.HashSet;
 
 import coffeetable.utils.InfinityException;
 
-public class Infinite extends TheoreticalValue implements Comparable<Number>, Serializable {
+public final class Infinite extends TheoreticalValue implements Comparable<Number>, Serializable {
 	private static final long serialVersionUID = 4527336245481667931L;
 	private final static HashSet<String> acceptable = new HashSet<String>(
 		Arrays.asList( new String[] {"inf","infinite","infinity"} )
@@ -51,7 +51,7 @@ public class Infinite extends TheoreticalValue implements Comparable<Number>, Se
 	
 	public int hashCode() {
 		int hash = super.hashCode();
-		hash = 89 * hash * posOrNeg;
+		hash = 89 ^ hash ^ posOrNeg;
 		return hash;
 	}
 	

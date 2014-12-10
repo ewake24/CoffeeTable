@@ -13,13 +13,19 @@ import java.util.regex.Pattern;
 import coffeetable.utils.CsvParseException;
 
 /**
- * A class designed to create a new DataTable from a file input
+ * A class designed to create a new DataTable from a file input. NOTE: if you get
+ * and IllegalArgumentException attesting that there is a dimension mismatch in 
+ * headers and content, ensure there are no stray delimiters in the data. This is most
+ * common when parsing a CSV; occasionally a thousands-separator (1,000) will be left
+ * in place and the parser will attempt to split this, resulting in too many columns
+ * for the headers
  * @author Taylor G Smith
  * @see DataTable
  */
-public class CsvParser {
-	private static final List<String> prohibited = Arrays.asList(new String[] {"\b","\\","[","]","-"});
-	private static final Pattern p = Pattern.compile("[\\t \" \\r \b \\n \\* \\p{C}]"); //WORK ON THIS, somehow removes all spaces -- old: \\s
+public final class CsvParser {
+	private static final List<String> prohibited = Arrays.asList(new String[] {"\b","\\","[","]","-"}); //Prohibited delimiters
+	private static final Pattern p = Pattern.compile("[\\t \" \\r \b \\n \\* \\p{C}]"); 			//Don't want spaces
+	private static final Pattern headerPattern = Pattern.compile("[\\t\"\\r\b\\n\\*\\p{C}]"); //Spaces OK
 	private final static String defaultDelimiter = ",";
 	private boolean autobox = true;
 	private boolean headers = false;
@@ -64,10 +70,11 @@ public class CsvParser {
 		}
 	}
 	
-	private final String[] cleanArray(String[] arr) {
+	private final String[] cleanArray(String[] arr, boolean headers) {
 		String[] returnable = new String[arr.length];
 		for(int i = 0; i < arr.length; i++) {
-			String t = p.matcher(arr[i]).replaceAll("");
+			String t = headers ? headerPattern.matcher(arr[i]).replaceAll("") 
+					: p.matcher(arr[i]).replaceAll("");
 			returnable[i] = t.equals("") ? "NA" : t;
 		}
 		return returnable;
@@ -115,19 +122,20 @@ public class CsvParser {
 					br.close();
 					throw new IllegalArgumentException("Specified delimiter does not exist");
 				} else if(++rowCount==1 && headers) {
-					headerlist = cleanArray(line.split(delimiter));
+					headerlist = cleanArray(line.split(delimiter),true);
 					continue;
 				} else if(line.endsWith(delimiter)) //Have to in order to avoid dim mismatch
 					line += "NA";
 				
-				String[] row = cleanArray(line.split(delimiter));
+				String[] row = cleanArray(line.split(delimiter),false);
 				if(null == datatable)
 					datatable = new DataTable(row.length); // Invoke protected constructor
 				
 				/* If line ends with delimiter, it is a missing value on the last column */
 				if(headers && (row.length!=headerlist.length)) {
 					br.close();
-					throw new IllegalArgumentException("Dimension mismatch between headers and rows");
+					throw new IllegalArgumentException("Dimension mismatch between headers and rows"
+							+ Arrays.asList(row));
 				}
 				
 				if(null == schema) {

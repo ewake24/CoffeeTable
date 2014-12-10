@@ -253,7 +253,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 */
 	@SuppressWarnings("unchecked")
 	final static class ContentFactory {
-		private static void addEmptyColsWithInitPopulate(DataTable table, DataRow row, boolean trusted) {
+		static void addEmptyColsWithInitPopulate(DataTable table, DataRow row, boolean trusted) {
 			for( int i = 0; i < row.size(); i++ ) {
 				table.cols.add( trusted ? 
 						new DataColumn(true,table.options.get("default.num.rows")) : 
@@ -264,14 +264,14 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 			}
 		}
 		
-		private static void addEmptyRowsWithInitPopulate(DataTable table, DataColumn col) {
+		static void addEmptyRowsWithInitPopulate(DataTable table, DataColumn col) {
 			for( int i = 0; i < col.size(); i++ ) {
 				table.rows.add(new DataRow(col.size()));
 				table.rows.get(i).add(col.get(i));
 			}
 		}
 		
-		private static void addToExistingCols(DataTable table, DataRow row, boolean trusted) {
+		static void addToExistingCols(DataTable table, DataRow row, boolean trusted) {
 			dimensionCheckRow(row, table);
 			for( int i = 0; i < row.size(); i++ ) {
 				if(trusted)
@@ -280,7 +280,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 			}
 		}
 		
-		private static void addToExistingColsAtIndex(DataTable table, DataRow row, boolean trusted, int index) {
+		static void addToExistingColsAtIndex(DataTable table, DataRow row, boolean trusted, int index) {
 			dimensionCheckRow(row, table);
 			for( int i = 0; i < row.size(); i++ ) {
 				if(trusted)
@@ -289,35 +289,39 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 			}
 		}
 		
-		private static void addToExistingRows(DataTable table, DataColumn col ) {
+		static void addToExistingRows(DataTable table, DataColumn col ) {
 			dimensionCheckCol(col, table);
 			for( int i = 0; i < col.size(); i++ )
 				table.rows.get(i).add(col.get(i));
 		}
 		
-		private static void addToExistingRowsAtIndex(DataTable table, DataColumn col, int index) {
+		static void addToExistingRowsAtIndex(DataTable table, DataColumn col, int index) {
 			dimensionCheckCol(col, table);
 			for( int i = 0; i < col.size(); i++ )
 				table.rows.get(i).add(index,col.get(i));
 		}
 		
-		private static void dimensionCheckCol(DataColumn col, DataTable table) {
+		static void dimensionCheckCol(DataColumn col, DataTable table) {
 			if(!(col.size() == table.nrow()))
 				throw new DimensionMismatchException("Column length does not match number of rows");
 		}
 		
-		private static void dimensionCheckRow(DataRow row, DataTable table) {
+		static void dimensionCheckRow(DataRow row, DataTable table) {
 			if(!(row.size() == table.ncol()))
 				throw new DimensionMismatchException("Row length does not match number of columns");
 		}
 		
-		private static void schemaAssignment(DataTable table, DataRow row) {
+		static void schemaAssignment(DataTable table, DataRow row) {
 			if(null == table.schema || table.rows.isEmpty())
 				table.schema = row.schema();
 		}
 	}
 	
-	final static class SubsettableConditions {
+	/**
+	 * Class to handle all block removals
+	 * @author Taylor G Smith
+	 */
+	final static class BatchModUtilities {
 		static boolean inRange_col(DataTable dt, int bottom, int top, boolean inclusive) {
 			return inclusive ? (bottom >= 0) && (top <= dt.cols.size()-1) && (bottom <= top) :
 						(bottom >= -1) && (top <= dt.cols.size()) && (bottom < top) && (top-bottom>1); //Must be at least one between them
@@ -326,6 +330,92 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 		static boolean inRange_row(DataTable dt, int bottom, int top, boolean inclusive) {
 			return inclusive ? (bottom >= 0) && (top <= dt.rows.size()-1) && (bottom <= top) :
 						(bottom >= -1) && (top <= dt.rows.size()) && (bottom < top) && (top-bottom>1); //Must be at least one between them
+		}
+		
+		static Collection<DataColumn> removeColumnRange(DataTable dt, int lo, int hi, boolean inclusive) {
+			if(!inRange_col(dt,lo,hi,inclusive))
+				throw new IllegalArgumentException("Out of range");
+			int colsToRemove = inclusive ? ((hi+1)-(lo+1))+1 : ((hi+1)-(lo+1))-1;
+			int index = 0;
+			ArrayList<DataColumn> arr = new ArrayList<DataColumn>();
+			while(index++ < colsToRemove) {
+				arr.add(dt.removeColumn(inclusive ? lo : lo+1));
+			}
+			return arr;
+		}
+		
+		static Collection<DataRow> removeRowRange(DataTable dt, int lo, int hi, boolean inclusive) {
+			if(!inRange_row(dt,lo,hi,inclusive))
+				throw new IllegalArgumentException("Out of range");
+			int rowsToRemove = inclusive ? ((hi+1)-(lo+1))+1 : ((hi+1)-(lo+1))-1;
+			int index = 0;
+			ArrayList<DataRow> arr = new ArrayList<DataRow>();
+			while(index++ < rowsToRemove) {
+				arr.add(dt.removeRow(inclusive ? lo : lo+1));
+			}
+			return arr;
+		}
+	}
+	
+	/**
+	 * Handles all table segmentation (i.e., dicing operations)
+	 * @author Taylor G Smith
+	 */
+	final class SubTable {
+		private final DataTable dt;
+		private final int colStart;
+		private final int colEnd;
+		private final int rowStart;
+		private final int rowEnd;
+		
+		public SubTable( DataTable dt, int rowStart, int rowEnd, int colStart, int colEnd ) {
+			this.dt = dt;
+			this.colStart = colStart;
+			this.colEnd = colEnd;
+			this.rowStart = rowStart;
+			this.rowEnd = rowEnd;
+		}
+		
+		private DataTable cutCols(DataTable newdata) {
+			if(!(colStart==0)) {
+				newdata.removeColumnRange(0, colStart-1, true);
+				newdata.removeColumnRange(1 + colEnd-colStart, newdata.ncol()-1, true);
+			} else {
+				newdata.removeColumnRange(colEnd+1, newdata.ncol()-1, true);
+			} return newdata;
+		}
+		
+		private DataTable cutRows(DataTable newdata) {
+			if(!(rowStart == 0)) {
+				newdata.removeRowRange(0, rowStart - 1, true);
+				newdata.removeRowRange(1 + rowEnd-rowStart, newdata.nrow()-1, true);
+			} else {
+				newdata.removeRowRange(rowEnd+1, newdata.nrow()-1, true);
+			} return newdata;
+		}
+		
+		private boolean diceWithAllColumns() {
+			return (colStart==0 && colEnd==dt.cols.size()-1);
+		}
+		
+		private boolean diceWithAllRows() {
+			return (rowStart==0 && rowEnd==dt.rows.size()-1);
+		}
+		
+		public DataTable dice() {
+			DataTable newdata = (DataTable) dt.clone();
+			
+			boolean diceWithAllColumns = diceWithAllColumns();
+			boolean diceWithAllRows = diceWithAllRows();
+			
+			/* If there is nothing to cut out, just return DT */
+			if(diceWithAllColumns && diceWithAllRows)
+				return dt;
+			if(!diceWithAllRows) 
+				newdata = cutRows(newdata);
+			if(!diceWithAllColumns)
+				newdata = cutCols(newdata);
+			return newdata;
 		}
 	}
 	
@@ -542,15 +632,18 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	
 	/**
 	 * Will remove all rows containing any TheoreticalValue.class objects
+	 * from a cloned instance of this table
 	 */
-	public final void completeCases() {
-		for(int i = 0; i < rows.size(); i++) {
-			if(i >= rows.size())
+	public final DataTable completeCases() {
+		DataTable dt = (DataTable) this.clone();
+		for(int i = 0; i < dt.rows.size(); i++) {
+			if(i >= dt.rows.size())
 				break;
 			
-			if(rows.get(i).containsNA())
-				this.removeRow(i--);
+			if(dt.rows.get(i).containsNA())
+				dt.removeRow(i--);
 		}
+		return dt;
 	}
 	
 	/**
@@ -592,28 +685,6 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	}
 	
 	/**
-	 * Determine whether the dicing operation will cut any columns out
-	 * @param colStart
-	 * @param colEnd
-	 * @param inclusive
-	 * @return whether the subset is just removing rows
-	 */
-	private boolean diceWithAllColumns(int colStart, int colEnd) {
-		return (colStart==0 && colEnd==cols.size()-1);
-	}
-	
-	/**
-	 * Determine whether the dicing operation will cut any rows out
-	 * @param rowStart
-	 * @param rowEnd
-	 * @param inclusive
-	 * @return whether the subset is just removing columns
-	 */
-	private boolean diceWithAllRows(int rowStart, int rowEnd) {
-		return (rowStart==0 && rowEnd==rows.size()-1);
-	}
-	
-	/**
 	 * Dices the DataTable into a subset
 	 * @param rowStart - row from which to begin subset (inclusive)
 	 * @param rowEnd - row at which to end subset (inclusive)
@@ -622,41 +693,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @return a copy of the current instance of DataTable diced at the given boundaries
 	 */
 	public final DataTable dice(int rowStart, int rowEnd, int colStart, int colEnd) {
-		DataTable newdata = new DataTable();
-		newdata.rows = rows;
-		newdata.cols = cols;
-		newdata.schema = schema;
-		newdata.tableName = tableName;
-		newdata.options = options;
-		
-		boolean diceWithAllColumns = diceWithAllColumns(colStart, colEnd);
-		boolean diceWithAllRows = diceWithAllRows(rowStart, rowEnd);
-		
-		/* If there is nothing to cut out, just return DT */
-		if(diceWithAllColumns && diceWithAllRows)
-			return this;
-		
-		//Cut rows
-		if(!diceWithAllRows) {
-			if(!(rowStart == 0)) {
-				newdata.removeRowRange(0, rowStart - 1, true);
-				newdata.removeRowRange(1 + rowEnd-rowStart, newdata.nrow()-1, true);
-			} else {
-				newdata.removeRowRange(rowEnd+1, newdata.nrow()-1, true);
-			}
-		}
-		
-		//Cut cols
-		if(!diceWithAllColumns) {
-			if(!(colStart==0)) {
-				newdata.removeColumnRange(0, colStart-1, true);
-				newdata.removeColumnRange(1 + colEnd-colStart, newdata.ncol()-1, true);
-			} else {
-				newdata.removeColumnRange(colEnd+1, newdata.ncol()-1, true);
-			}
-		}
-		
-		return newdata;
+		return new SubTable(this, rowStart, rowEnd, colStart, colEnd).dice();
 	}
 	
 	public boolean equals(Object o) {
@@ -973,14 +1010,8 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @param hi - the index at which to end removal
 	 * @param inclusive - whether the lo/hi params are inclusive
 	 */
-	public final void removeColumnRange(int lo, int hi, boolean inclusive) {
-		if(!SubsettableConditions.inRange_col(this,lo,hi,inclusive))
-			throw new IllegalArgumentException("Out of range");
-		int colsToRemove = inclusive ? ((hi+1)-(lo+1))+1 : ((hi+1)-(lo+1))-1;
-		int index = 0;
-		while(index++ < colsToRemove) {
-			removeColumn(inclusive ? lo : lo+1);
-		}
+	public final Collection<DataColumn> removeColumnRange(int lo, int hi, boolean inclusive) {
+		return BatchModUtilities.removeColumnRange(this, lo, hi, inclusive);
 	}
 	
 	/**
@@ -1008,14 +1039,8 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @param hi - the index at which to end removal
 	 * @param inclusive - whether the lo/hi params are inclusive
 	 */
-	public final void removeRowRange(int lo, int hi, boolean inclusive) {
-		if(!SubsettableConditions.inRange_row(this,lo,hi,inclusive))
-			throw new IllegalArgumentException("Out of range");
-		int rowsToRemove = inclusive ? ((hi+1)-(lo+1))+1 : ((hi+1)-(lo+1))-1;
-		int index = 0;
-		while(index++ < rowsToRemove) {
-			removeRow(inclusive ? lo : lo+1);
-		}
+	public final Collection<DataRow> removeRowRange(int lo, int hi, boolean inclusive) {
+		return BatchModUtilities.removeRowRange(this, lo, hi, inclusive);
 	}
 	
 	/**

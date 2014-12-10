@@ -284,7 +284,7 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 	 * @return a DataColumn-transformed DataRow
 	 */
 	@SuppressWarnings("unchecked")
-	public DataColumn toDataColumn() {
+	public final DataColumn toDataColumn() {
 		if(typeSafetyList().isSingular()) {
 			//DataColumn d = new DataColumn( Arrays.asList(super.toArray()) , name );
 			DataColumn d = new DataColumn(this,name);

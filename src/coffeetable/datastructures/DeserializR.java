@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
  * @author Taylor G Smith
  * @deprecated
  */
-public class DeserializR {
+public final class DeserializR {
 	private static final Pattern p = Pattern.compile("[ \" /\\\\ \\} \\{ ]");
 	private final File file;
 	private final boolean autobox;

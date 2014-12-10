@@ -16,7 +16,7 @@ import coffeetable.math.TheoreticalValue;
  * @author Taylor G Smith
  */
 @SuppressWarnings("rawtypes")
-public class Schema extends LinkedList<Class<?>> implements Serializable {
+public final class Schema extends LinkedList<Class<?>> implements Serializable {
 	private static final long serialVersionUID = -2991576118127902417L;
 	
 	public Schema() {
@@ -109,7 +109,6 @@ public class Schema extends LinkedList<Class<?>> implements Serializable {
 			sdf.remove(MissingValue.class);
 		if(sdf.contains(Infinite.class))
 			sdf.remove(Infinite.class);
-		
 		return (sdf.size()==1);
 	}
 	

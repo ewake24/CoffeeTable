@@ -12,7 +12,7 @@ import coffeetable.math.TheoreticalValue;
  * @author Taylor G Smith
  */
 @SuppressWarnings("rawtypes")
-public class SubsettableCondition {
+public final class SubsettableCondition {
 	private final Object value;
 	private boolean equals = false;
 	private boolean lessThan = false;
@@ -36,6 +36,12 @@ public class SubsettableCondition {
 			this.value = value;
 		}
 		
+		/**
+		 * Should the builder look for the condition negating
+		 * that of the set evaluator? (i.e., !EQUALS vs. EQUALS, 
+		 * !LESSTHAN vs. LESSTHAN, etc.)
+		 * @return this Builder instance
+		 */
 		public Builder negate() {
 			negate = true;
 			return this;
@@ -43,7 +49,7 @@ public class SubsettableCondition {
 		
 		/**
 		 * Will remove all TheoreticalValues if selected
-		 * @return an instance of Builder
+		 * @return this instance of Builder
 		 */
 		public Builder removeNA() {
 			removeNA = true;

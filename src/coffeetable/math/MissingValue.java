@@ -1,6 +1,7 @@
 package coffeetable.math;
 
 import java.io.Serializable;
+import java.util.regex.Pattern;
 
 /**
  * To be used in conjunction with DataTable in place of a <tt>null</tt> value.
@@ -11,8 +12,9 @@ import java.io.Serializable;
  * @author Taylor G Smith
  * @see Number
  */
-public class MissingValue extends TheoreticalValue implements Comparable<Number>, Serializable {
+public final class MissingValue extends TheoreticalValue implements Comparable<Number>, Serializable {
 	private static final long serialVersionUID = 8685839276702330957L;
+	private static final Pattern pattern = Pattern.compile("[\\< \\> \\/]");
 	private static Integer value = Integer.MIN_VALUE;
 	private static int sortOrder = -1; //future implementation to allow toggle
 	private String rep = "NA";
@@ -36,9 +38,10 @@ public class MissingValue extends TheoreticalValue implements Comparable<Number>
 		if(null == o || o.getClass().equals(MissingValue.class))
 			return true;
 		String s = o.toString();
-		return s.equals("NA") 
-			|| s.isEmpty()
-			|| s.equals("<NA>"); //R sometimes uses this format
+		if(s.isEmpty())
+			return true;
+		s = pattern.matcher(s).replaceAll("").toLowerCase();
+		return s.equals("na");
 	}
 	
 	public boolean equals(Object arg0) {
@@ -51,7 +54,7 @@ public class MissingValue extends TheoreticalValue implements Comparable<Number>
 	
 	public int hashCode() {
 		int hash = super.hashCode();
-		hash = 79 * hash * sortOrder;
+		hash = 79 ^ hash ^ sortOrder;
 		return hash;
 	}
 
