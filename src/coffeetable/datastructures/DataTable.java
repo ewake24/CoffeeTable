@@ -517,51 +517,6 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	}
 	
 	/**
-	 * Clears all data from the DataTable, but retains the name
-	 */
-	public final void clear() {
-		tableUpdate();
-		cols = new ArrayList<DataColumn>();
-		rows = new ArrayList<DataRow>();
-		schema = null;
-	}
-	
-	public Object clone() {
-		DataTable clone = new DataTable(rows, tableName);
-		clone.options = options;
-		clone.exceptionLog = this.exceptionLog;
-		clone.isRendered = this.isRendered;
-		
-		return clone;
-	}
-	
-	/**
-	 * Returns true if the DataTable contains any NA values
-	 */
-	public final boolean containsNA() {
-		if(cols.isEmpty())
-			return false;
-		for(DataColumn c : cols) {
-			if(c.containsNA())
-				return true;
-		}
-		return false;
-	}
-	
-	/**
-	 * Returns the number of MissingValues in the table
-	 */
-	public final int countMissingValues() {
-		if(this.isEmpty())
-			return 0;
-		int sum = 0;
-		for(DataColumn t : cols) {
-			sum += t.countMissingValues();
-		}
-		return sum;
-	}
-	
-	/**
 	 * Creates a numeric version of the column passed in
 	 * @param col
 	 * @return a numeric version of the column
@@ -682,6 +637,52 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 		}
 		this.setRowNames(rowNames);
 		return true;
+	}
+	
+	/**
+	 * Clears all data from the DataTable, but retains the name
+	 */
+	public final void clear() {
+		tableUpdate();
+		cols = new ArrayList<DataColumn>();
+		rows = new ArrayList<DataRow>();
+		schema = null;
+	}
+	
+	public Object clone() {
+		DataTable clone = new DataTable(rows, tableName);
+		clone.options = options;
+		clone.exceptionLog = this.exceptionLog;
+		clone.isRendered = this.isRendered;
+		clone.setColNames(new ArrayList<String>(this.columnNames()));
+		
+		return clone;
+	}
+	
+	/**
+	 * Returns true if the DataTable contains any NA values
+	 */
+	public final boolean containsNA() {
+		if(cols.isEmpty())
+			return false;
+		for(DataColumn c : cols) {
+			if(c.containsNA())
+				return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * Returns the number of MissingValues in the table
+	 */
+	public final int countMissingValues() {
+		if(this.isEmpty())
+			return 0;
+		int sum = 0;
+		for(DataColumn t : cols) {
+			sum += t.countMissingValues();
+		}
+		return sum;
 	}
 	
 	/**
