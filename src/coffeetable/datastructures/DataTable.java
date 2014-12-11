@@ -44,8 +44,8 @@ import coffeetable.math.Infinite;
 @SuppressWarnings("rawtypes")
 public class DataTable implements java.io.Serializable, Cloneable, RowUtilities {
 	private static final long serialVersionUID = -246560507184440061L;
-	private List<DataColumn> cols;
-	private List<DataRow> rows;
+	private ArrayList<DataColumn> cols;
+	private ArrayList<DataRow> rows;
 	private String tableName;
 	private Schema schema;
 	private ArrayList<Exception> exceptionLog;
@@ -558,7 +558,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * Returns a collection of the DataTable's columns
 	 * @return collection of the DataTable's columns
 	 */
-	public final Collection<DataColumn> columns() {
+	public final ArrayList<DataColumn> columns() {
 		return cols;
 	}
 	
@@ -1078,7 +1078,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * Return a collection of the DataTable's rows
 	 * @return collection of the DataTable's rows
 	 */
-	public Collection<DataRow> rows() {
+	public ArrayList<DataRow> rows() {
 		return rows;
 	}
 	
