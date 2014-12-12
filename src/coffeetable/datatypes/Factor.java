@@ -17,6 +17,10 @@ public final class Factor implements Comparable<Object> {
 		this.level = level;
 	}
 	
+	public boolean equals(Object o) {
+		return Factor.isFactor(o) && o.hashCode() == this.hashCode();
+	}
+	
 	/**
 	 * Assign each String in a LinkedHashSet a factor level in order of appearance
 	 * @param set
@@ -44,7 +48,11 @@ public final class Factor implements Comparable<Object> {
 		return map;
 	}
 	
-	public boolean isFactor(Object o) {
+	public int hashCode() {
+		return representation.hashCode() ^ level;
+	}
+	
+	public static boolean isFactor(Object o) {
 		return o instanceof Factor;
 	}
 	
