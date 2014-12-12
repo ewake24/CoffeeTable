@@ -13,10 +13,11 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
+import coffeetable.datatypes.Factor;
 import coffeetable.interfaces.VectorUtilities;
 import coffeetable.math.Infinite;
 import coffeetable.math.MissingValue;
@@ -449,17 +450,39 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		 * converted to String.
 		 * @return a string-converted instance of DataColumn
 		 */
+		@SuppressWarnings("unchecked")
 		public static <T extends Comparable<? super T>> DataColumn<String> asCharacter(DataColumn<T> arg0) {
 			Collection<String> coll = new ArrayList<String>();
 			for(T t : arg0) {
 				coll.add(t.toString());
 			}
 			DataColumn<String> data = new DataColumn<String>(coll);
+			data.type = String.class;
+			data = (DataColumn<String>) asCharacterUtilities(data,arg0);
+			return data;
+		}
+		
+		@SuppressWarnings({ "unchecked" })
+		public static <T extends Comparable<? super T>> DataColumn<Factor> asFactor(DataColumn<T> arg0) {
+			if(arg0.contentClass().equals(Factor.class))
+				return (DataColumn<Factor>) arg0;
+			DataColumn<String> asString = arg0.asCharacter();
+			HashMap<String,Factor> factorMap = Factor.factorMap(asString.unique());
+			
+			Collection<Factor> coll = new ArrayList<Factor>();
+			for(String s : asString)
+				coll.add(factorMap.get(s));
+			DataColumn<Factor> data = new DataColumn<Factor>(coll);
+			data.type = Factor.class;
+			data = (DataColumn<Factor>) asCharacterUtilities(data,arg0);
+			return data;
+		}
+		
+		private static <T extends Comparable<? super T>> DataColumn<?> asCharacterUtilities(DataColumn<?> data, DataColumn<T> arg0) {
 			data.isConvertable = arg0.isConvertable;
 			data.checkedForConvertable = arg0.checkedForConvertable;
 			data.isNumeric = false;
 			data.checkedForNumericism = false;
-			data.type = String.class;
 			data.conversionType = arg0.conversionType;
 			if(arg0.widthCalculated) {
 				data.width = arg0.width;
@@ -645,6 +668,10 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 */
 	protected final DataColumn<Double> asDouble() {
 		return TypeConversionUtils.asDouble(this);
+	}
+	
+	public final DataColumn<Factor> asFactor() {
+		return TypeConversionUtils.asFactor(this);
 	}
 	
 	/**
@@ -1316,8 +1343,8 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		return name + ": " + super.toString();
 	}
 	
-	public Set<T> unique() {
-		return new HashSet<T>(this);
+	public LinkedHashSet<T> unique() {
+		return new LinkedHashSet<T>(this);
 	}
 	
 	/**

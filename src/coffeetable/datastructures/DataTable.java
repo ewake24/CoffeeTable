@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
+import coffeetable.datatypes.Factor;
 import coffeetable.interfaces.RowUtilities;
 import coffeetable.io.DataTableWriter;
 import coffeetable.io.HtmlTableWriter;
@@ -515,6 +516,16 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 		cols.add(index,col);
 		ContentFactory.addToExistingRowsAtIndex(this, col, index);
 	}
+
+	/**
+	 * Creates a Factor version of the column passed in
+	 * @param col
+	 * @return a Factor version of the column
+	 */
+	@SuppressWarnings("unchecked")
+	public final static DataColumn<Factor> castColumnAsFactor(DataColumn col) {
+		return (DataColumn<Factor>) col.asFactor();
+	}
 	
 	/**
 	 * Creates a numeric version of the column passed in
@@ -563,10 +574,21 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	}
 	
 	/**
+	 * Will convert the DataColumn to Factor. This is not a static method;
+	 * it is only for instance-contained DataColumns. For a static version
+	 * of the method, user castColumnAsFactor
+	 * @param col
+	 */
+	public final void convertColumnToFactor(DataColumn col) {
+		DataColumn<Factor> target = castColumnAsFactor(col);
+		this.setColumn(indexOf(col), target);
+	}
+	
+	/**
 	 * Will convert the DataColumn to Double, if it can be parsed (will keep the
 	 * Number type--i.e., Integer--if it is already numeric). This is
 	 * not a static method; it is only for instance-contained DataColumns.
-	 * For a static version of the method, use columnAsNumeric.
+	 * For a static version of the method, use castColumnAsNumeric.
 	 * @param col
 	 */
 	public final void convertColumnToNumeric(DataColumn col) {
@@ -577,7 +599,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	/**
 	 * Will convert the DataColumn to String. This is
 	 * not a static method; it is only for instance-contained DataColumns.
-	 * For a static version of the method, use columnAsString.
+	 * For a static version of the method, use castColumnAsString.
 	 * @param col
 	 */
 	public final void convertColumnToString(DataColumn col) {

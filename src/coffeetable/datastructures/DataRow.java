@@ -8,9 +8,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
+import java.util.LinkedHashSet;
 
 import coffeetable.interfaces.RowUtilities;
 import coffeetable.interfaces.VectorUtilities;
@@ -329,8 +328,8 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 	}
 	
 	@SuppressWarnings("unchecked")
-	public Set<?> unique() {
-		return new HashSet(this);
+	public LinkedHashSet<?> unique() {
+		return new LinkedHashSet(this);
 	}
 	
 	/**
