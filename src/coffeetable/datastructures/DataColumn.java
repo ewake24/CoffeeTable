@@ -12,13 +12,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
 import coffeetable.datatypes.Factor;
-import coffeetable.interfaces.VectorUtilities;
 import coffeetable.math.Infinite;
 import coffeetable.math.MissingValue;
 import coffeetable.math.TheoreticalValue;
@@ -33,10 +31,9 @@ import coffeetable.utils.SchemaMismatchException;
  * @author Taylor G Smith
  * @param <T>
  */
-public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> implements java.io.Serializable, VectorUtilities<T> {
+public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> extends Vector<T> implements java.io.Serializable {
 	private static final long serialVersionUID = 1872913776989418759L;
 	private final static int defaultSize = 15;
-	private String name;
 	
 	/* Declared transient/static with Object instead of T for serialization purposes */
 	private transient final static Comparator<Object> comparator = new Comparator<Object>() {
@@ -114,6 +111,8 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 */
 	@SuppressWarnings("unchecked")
 	protected DataColumn(DataRow row) {
+		super(row.size());
+		
 		//Don't need to check for singularity, because it was checked from DataRow
 		for(Object o : row)
 			this.addFromTrusted((T) o);
@@ -451,7 +450,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		 * @return a string-converted instance of DataColumn
 		 */
 		@SuppressWarnings("unchecked")
-		public static <T extends Comparable<? super T>> DataColumn<String> asCharacter(DataColumn<T> arg0) {
+		public static <T extends Comparable<? super T> & java.io.Serializable> DataColumn<String> asCharacter(DataColumn<T> arg0) {
 			Collection<String> coll = new ArrayList<String>();
 			for(T t : arg0) {
 				coll.add(t.toString());
@@ -463,7 +462,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		}
 		
 		@SuppressWarnings({ "unchecked" })
-		public static <T extends Comparable<? super T>> DataColumn<Factor> asFactor(DataColumn<T> arg0) {
+		public static <T extends Comparable<? super T> & java.io.Serializable> DataColumn<Factor> asFactor(DataColumn<T> arg0) {
 			if(arg0.contentClass().equals(Factor.class))
 				return (DataColumn<Factor>) arg0;
 			DataColumn<String> asString = arg0.asCharacter();
@@ -478,7 +477,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 			return data;
 		}
 		
-		private static <T extends Comparable<? super T>> DataColumn<?> asCharacterUtilities(DataColumn<?> data, DataColumn<T> arg0) {
+		private static <T extends Comparable<? super T> & java.io.Serializable> DataColumn<?> asCharacterUtilities(DataColumn<?> data, DataColumn<T> arg0) {
 			data.isConvertable = arg0.isConvertable;
 			data.checkedForConvertable = arg0.checkedForConvertable;
 			data.isNumeric = false;
@@ -499,7 +498,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		 * @param original
 		 * @return the numerically-converted DataColumn with cloned attributes
 		 */
-		private static <T extends Comparable<? super T>> DataColumn<? extends Number> asNumericUtilities(DataColumn<? extends Number> returnable, DataColumn<T> original) {
+		private static <T extends Comparable<? super T> & java.io.Serializable> DataColumn<? extends Number> asNumericUtilities(DataColumn<? extends Number> returnable, DataColumn<T> original) {
 			returnable.isNumeric = true;
 			returnable.checkedForNumericism = true;
 			returnable.isConvertable = true;
@@ -516,9 +515,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		}
 		
 		@SuppressWarnings({ "unchecked", "rawtypes" })
-		public static <T extends Comparable<? super T>> DataColumn<Double> asDouble(DataColumn<T> arg0) {
-			/*if(arg0.contentClass().equals(Double.class))
-				return (DataColumn) arg0;*/
+		public static <T extends Comparable<? super T> & java.io.Serializable> DataColumn<Double> asDouble(DataColumn<T> arg0) {
 			ArrayList collection = new ArrayList(arg0.size());
 			for(T t : arg0) {
 				String tar = arg0.contentClass().equals(String.class) ? (String) t : t.toString();
@@ -535,7 +532,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 		}
 		
 		@SuppressWarnings({ "unchecked", "rawtypes" })
-		public static <T extends Comparable<? super T>> DataColumn<Integer> asInteger(DataColumn<T> arg0) {
+		public static <T extends Comparable<? super T> & java.io.Serializable> DataColumn<Integer> asInteger(DataColumn<T> arg0) {
 			/*if(arg0.contentClass().equals(Integer.class))
 				return (DataColumn) arg0;*/
 			ArrayList collection = new ArrayList(arg0.size());
@@ -900,14 +897,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	}
 	
 	public int hashCode() {
-		int h = 0;
-		Iterator<T> i = iterator();
-		while (i.hasNext()) {
-			T obj = i.next();
-			if (obj != null)
-				h += obj.hashCode();
-		}
-		return h^this.size();
+		return super.hashCode()^12;
 	}
 	
 	/**
@@ -1012,13 +1002,6 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	@SuppressWarnings("unchecked")
 	public T mode() {
 		return (T) ArithmeticOperations.mode(this);
-	}
-	
-	/**
-	 * Returns the name of the DataColumn ('DataColumn' if not set)
-	 */
-	public String name() {
-		return name;
 	}
 	
 	/**
@@ -1334,13 +1317,6 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	public final DataRow toDataRow() {
 		DataRow d = new DataRow(this,name);
 		return d;
-	}
-	
-	/**
-	 * Presents a String representation of the DataColumn
-	 */
-	public String toString() {
-		return name + ": " + super.toString();
 	}
 	
 	public LinkedHashSet<T> unique() {

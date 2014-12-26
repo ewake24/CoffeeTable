@@ -560,7 +560,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	public Collection<String> columnNames() {
 		Collection<String> names = new LinkedList<String>();
 		for( DataColumn r : cols ) {
-			names.add(r.name());
+			names.add(r.name);
 		}
 		return names;
 	}
@@ -1091,7 +1091,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	public Collection<String> rowNames() {
 		Collection<String> names = new LinkedList<String>();
 		for( DataRow r : rows ) {
-			names.add(r.name());
+			names.add(r.name);
 		}
 		return names;
 	}

@@ -6,13 +6,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 
 import coffeetable.interfaces.RowUtilities;
-import coffeetable.interfaces.VectorUtilities;
 import coffeetable.math.Infinite;
 import coffeetable.math.MissingValue;
 import coffeetable.math.TheoreticalValue;
@@ -20,12 +17,13 @@ import coffeetable.utils.SchemaMismatchException;
 
 
 @SuppressWarnings("rawtypes")
-public class DataRow extends ArrayList implements java.io.Serializable, VectorUtilities, RowUtilities {
+public class DataRow extends Vector implements java.io.Serializable, RowUtilities {
 	private static final long serialVersionUID = 3148244157795837127L;
-	private String name;
+	private final static int defaultSize = 15;
 	private boolean schemaFound = false;
 	private Schema schema = new Schema();
 	
+	@SuppressWarnings("unchecked")
 	public DataRow(int initSize) {
 		super(initSize);
 		name = "DataRow";
@@ -37,8 +35,7 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 	}
 	
 	public DataRow() {
-		/* Init methods if any */
-		this(15);
+		this(defaultSize);
 	}
 	
 	public DataRow(Collection arg0) {
@@ -53,8 +50,7 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 	}
 	
 	public DataRow(String name) {
-		this();
-		setName(name);
+		this(defaultSize,name);
 	}
 	
 	/**
@@ -157,14 +153,7 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 	}
 	
 	public int hashCode() {
-		int h = 0;
-		Iterator i = iterator();
-		while (i.hasNext()) {
-			Object obj = i.next();
-			if (obj != null)
-				h += obj.hashCode();
-		}
-		return h^this.size();
+		return super.hashCode()^11;
 	}
 	
 	/**
@@ -174,10 +163,6 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 	 */
 	protected final Class<? extends Object> identifyClass() {
 		return typeSafetyList().getContentClass();
-	}
-	
-	public String name() {
-		return name;
 	}
 	
 	public void print() {
@@ -261,6 +246,7 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 	/**
 	 * Assign a name for the row
 	 */
+	@SuppressWarnings("unchecked")
 	public void setName(String name) {
 		this.name = (null == name || name.isEmpty()) ? "DataRow" : 
 						(name.equals("DataColumn") ? "DataRow" : name); 
@@ -301,10 +287,6 @@ public class DataRow extends ArrayList implements java.io.Serializable, VectorUt
 			);
 		}
 		return new DataColumn(newDR,name);
-	}
-	
-	public String toString() {
-		return name + " : " + super.toString();
 	}
 	
 	/**
