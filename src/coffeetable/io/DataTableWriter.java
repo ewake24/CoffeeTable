@@ -105,6 +105,7 @@ public class DataTableWriter {
 				countIter = 0;
 			}
 		} catch (IOException e) {
+			dt.logException(e);
 			throw e;
 		} finally {
 			if(!(f==null)) {

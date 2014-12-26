@@ -803,8 +803,10 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 			return null;
 		else {
 			for(T t : this) {
+				/* New structure means an all NA column
+				 * should have a null type*/
 				if(!TheoreticalValue.isTheoretical(t))
-					return (type = t.getClass()); //Legal?
+					return (type = t.getClass());
 				else continue;
 			}
 		}
@@ -955,8 +957,7 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 			isNumeric = Number.class.isAssignableFrom(contentClass());
 			checkedForNumericism = true;
 			return isNumeric;
-		} else
-			return isNumeric;
+		} else return isNumeric;
 	}
 	
 	/* -- Intra-DataTable sorts -- */
@@ -1033,21 +1034,21 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	 * @return the class the column will convert to if called 'asNumeric()'
 	 */
 	protected final Class<?> numericConversionType() {
-		if(isNumeric())						//The generic type was declared so we know it
+		if(isNumeric())							//The generic type was declared so we know it
 			return type;
-		else if(!(null == conversionType))	//We have already found the type
+		else if(!(null == conversionType))		//We have already found the type
 			return conversionType;
-		else {								//It is a string type -- need to find conversion
+		else {									//It is a string type -- need to find conversion
 			int cutoff = this.size() < 20 ? this.size() : //If it's too short, just loop it all
-							this.size()/2;	//For now let's cutoff at the halfway point to save time
+							this.size()/3;		//For now let's cutoff at the halfway point to save time
 			int start = 0;
-			String col = super.toString().toLowerCase();
-			boolean possibleDouble = col.contains("e") || col.contains(".");
+			String col = super.toString().toLowerCase();						//String representation of column
+			boolean possibleDouble = col.contains("e") || col.contains(".");	//A double will have a . or e
 			for(T t : this) {
-				if(start++ == cutoff)		//Now we only look at half the column to determine
+				if(start++ == cutoff)			//Now we only look at a portion of the column to determine
 					return conversionType;
-				String ts = t.toString(); 	//String version for pattern matching...
-				if( numberCouldBeInteger(ts) ) {
+				String ts = t.toString(); 		//String version for pattern matching...
+				if( numberCouldBeInteger(ts) && !possibleDouble ) {//Could it be an integer?
 					conversionType = Integer.class;
 				} else if( possibleDouble && numberCouldBeDouble(ts) ) {
 					return (conversionType = Double.class); 	//Hierarchical. If double, automatically return double
@@ -1058,12 +1059,11 @@ public class DataColumn<T extends Comparable<? super T>> extends ArrayList<T> im
 	}
 	
 	private boolean numberCouldBeInteger(String ts) {
-		return ts.matches("-?[0-9]+"); // << Should handle everything
+		return ts.matches("[-+]?[0-9]+"); // << Should handle everything
 	}
 	
 	private boolean numberCouldBeDouble(String ts) {
 		return ts.matches("[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?");
-				//ts.matches("-?\\d|\\.+(\\d+)?+[eE][-+]?\\d");
 	}
 	
 	/**

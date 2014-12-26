@@ -5,7 +5,8 @@ import java.util.LinkedHashSet;
 
 /**
  * A class for DataTable reminiscent of enumerated values, or categorical
- * variables found within a DataColumn/Row/Table.
+ * variables found within a DataColumn/Row/Table. Can be used as factor levels
+ * in predictive analytics packages
  * @author Taylor G Smith
  */
 public final class Factor implements Comparable<Object> {
@@ -53,7 +54,7 @@ public final class Factor implements Comparable<Object> {
 	}
 	
 	public static boolean isFactor(Object o) {
-		return o instanceof Factor;
+		return o instanceof Factor || o.getClass().equals(Factor.class);
 	}
 	
 	/**

@@ -841,7 +841,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * parse exceptions are thrown, they will be stored in this collection
 	 * @param e
 	 */
-	protected final void logException(Exception e) {
+	public final void logException(Exception e) {
 		exceptionLog.add(e);
 	}
 	
@@ -1380,15 +1380,11 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @param headers
 	 * @param rownames
 	 * @return true if successful
+	 * @throws IOException 
 	 */
-	public final boolean writeToFile(File file, String delimiter, boolean headers, boolean rownames) {
+	public final boolean writeToFile(File file, String delimiter, boolean headers, boolean rownames) throws IOException {
 		DataTableWriter dtw = new DataTableWriter(this, file, delimiter, headers, rownames);
-		try {
-			return dtw.write();
-		} catch (IOException e) {
-			this.logException(e);
-			return false;
-		}
+		return dtw.write();
 	}
 	
 	/**
@@ -1398,8 +1394,9 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * as an arg
 	 * @param file
 	 * @return true if successful
+	 * @throws IOException 
 	 */
-	public final boolean writeToHtml(File file) {
+	public final boolean writeToHtml(File file) throws IOException {
 		return writeToHtmlPrivate(new HtmlTableWriter(this,file));
 	}
 	
@@ -1407,18 +1404,14 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * Allows for "fancy" writes of an Html table with a custom HtmlTableWriter object
 	 * @param html - HtmlTableWriter object
 	 * @return true if successful
+	 * @throws IOException 
 	 */
-	public final boolean writeToHtml(HtmlTableWriter html) {
+	public final boolean writeToHtml(HtmlTableWriter html) throws IOException {
 		html.setTable(this); //Ensure this table will be written
 		return writeToHtmlPrivate(html);
 	}
 	
-	private boolean writeToHtmlPrivate(HtmlTableWriter html) {
-		try {
-			return html.write();
-		} catch (IOException e) {
-			this.logException(e);
-			return false;
-		}
+	private boolean writeToHtmlPrivate(HtmlTableWriter html) throws IOException {
+		return html.write();
 	}
 }
