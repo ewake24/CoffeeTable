@@ -41,20 +41,19 @@ import coffeetable.math.Infinite;
  * @see DataRow
  * @see MissingValue
  * @see Infinite
+ * @see SchemaSafeDataStructure
  */
 @SuppressWarnings("rawtypes")
-public class DataTable implements java.io.Serializable, Cloneable, RowUtilities {
+public class DataTable extends SchemaSafeDataStructure implements java.io.Serializable, Cloneable, RowUtilities {
 	private static final long serialVersionUID = -246560507184440061L;
 	private ArrayList<DataColumn> cols;
 	private ArrayList<DataRow> rows;
 	private String tableName;
-	private Schema schema;
 	private ArrayList<Exception> exceptionLog;
 	private HashMap<String, Integer> options;
 	private boolean isRendered; //cache rendering operations
 	
 	{
-		schema = null;
 		exceptionLog = new ArrayList<Exception>();
 		tableName = "New Table";
 		options = Options.setOptions();
@@ -491,9 +490,9 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	public final void addColumn(DataColumn<?> col) {
 		tableUpdate();
 		if(cols.isEmpty() || null==schema)
-			schema = updateSchemaFromNew(col.contentClass());
+			updateSchemaFromNew(col.contentClass());
 		else 
-			schema = updateSchema(col.contentClass());
+			updateSchema(col.contentClass());
 		cols.add(col);
 		if(rows.isEmpty()) 
 			ContentFactory.addEmptyRowsWithInitPopulate(this, col);
@@ -512,7 +511,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 		} else if(index > cols.size()) {
 			throw new ConcurrentModificationException("Proposed index suggests non-concurrent column addition (would require cols of NA values)");
 		}
-		schema = updateSchemaAt(index, col.contentClass());
+		updateSchemaAt(index, col.contentClass());
 		cols.add(index,col);
 		ContentFactory.addToExistingRowsAtIndex(this, col, index);
 	}
@@ -1023,7 +1022,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 		
 		for(int i = 0; i < rows.size(); i++)
 			rows.get(i).remove(arg0);
-		schema = updateSchemaFromRemove(arg0);
+		updateSchemaFromRemove(arg0);
 		return cols.remove(arg0);
 	}
 	
@@ -1102,23 +1101,6 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 */
 	public ArrayList<DataRow> rows() {
 		return rows;
-	}
-	
-	/**
-	 * Return the DataTable's schema
-	 */
-	public Schema schema() {
-		return schema;
-	}
-	
-	/**
-	 * Determines whether the schema of the incoming row
-	 * is safe to add to the current DataTable
-	 * @param sch
-	 * @return whether an addition can be made
-	 */
-	private boolean schemaIsSafe(Schema sch) {
-		return schema.isSafe(sch);
 	}
 	
 	/**
@@ -1315,7 +1297,7 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 	 * @return an instance of DataTable identical to the current instance but
 	 * without any duplicate rows
 	 */
-	public DataTable unique() {
+	public DataTable uniqueRows() {
 		LinkedHashSet<DataRow> lhs = new LinkedHashSet<DataRow>(rows);
 		DataTable dt = new DataTable(lhs, tableName);
 		
@@ -1324,30 +1306,6 @@ public class DataTable implements java.io.Serializable, Cloneable, RowUtilities 
 		dt.exceptionLog = this.exceptionLog;
 		
 		return dt;
-	}
-	
-	private Schema updateSchema(Class<? extends Object> appendable) {
-		Schema list = schema;
-		list.add(appendable);
-		return list;
-	}
-	
-	private Schema updateSchemaAt(int index, Class<? extends Object> appendable) {
-		Schema list = schema;
-		list.add(index, appendable);
-		return list;
-	}
-	
-	private Schema updateSchemaFromNew(Class<? extends Object> appendable) {
-		Schema list = new Schema();
-		list.add(appendable);
-		return list;
-	}
-	
-	private Schema updateSchemaFromRemove(int index) {
-		Schema list = schema;
-		list.remove(index);
-		return list;
 	}
 	
 	/* ---------- Table writing operations ---------- */

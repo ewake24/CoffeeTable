@@ -124,8 +124,7 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	
 	
 	
-	
-	
+	/*--------------------------------------------------------------------*/
 	/* PRIVATE CLASSES FOR OPERATIONS */
 	/**
 	 * A private static class for use with numerically-typed DataColumns. Implements various
@@ -662,9 +661,7 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 			return old;
 		}
 	}
-	
-	
-	
+	/*--------------------------------------------------------------------*/
 	
 	
 	/**
@@ -797,40 +794,24 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	@SuppressWarnings("unchecked")
 	public Object clone() {
 		DataColumn<T> clone = null;
+		
 		try {
 			clone = (DataColumn<T>) super.clone();
 		} catch(Exception e) {
 			throw new InternalError();
 		}
 		
-		if(widthCalculated) {
-			clone.widthCalculated = true;
-			clone.width = width;
-		} else {
-			clone.widthCalculated = false;
-			clone.width = 0;
-		}
-		
-		if(checkedForNumericism) {
-			clone.checkedForNumericism = true;
-			clone.isNumeric = isNumeric;
-		} else {
-			clone.checkedForNumericism = false;
-			clone.isNumeric = false;
-		}
-		
-		if(checkedForConvertable) {
-			clone.checkedForConvertable = true;
-			clone.isConvertable = isConvertable;
-			clone.conversionType = conversionType;
-		} else {
-			clone.checkedForConvertable = false;
-			clone.isConvertable = false;
-			clone.conversionType = null;
-		}
+		clone.widthCalculated = true;
+		clone.width = width;
+		clone.checkedForNumericism = true;
+		clone.isNumeric = isNumeric;
+		clone.checkedForConvertable = true;
+		clone.isConvertable = isConvertable;
+		clone.conversionType = conversionType;
 		clone.type = type;
 		clone.checkedForNAs = checkedForNAs;
 		clone.containsNAs = containsNAs;
+		
 		return clone;
 	}
 	
