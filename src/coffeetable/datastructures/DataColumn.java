@@ -123,6 +123,9 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	}
 	
 	
+	
+	
+	
 	/* PRIVATE CLASSES FOR OPERATIONS */
 	/**
 	 * A private static class for use with numerically-typed DataColumns. Implements various
@@ -549,6 +552,84 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 			returnable = (DataColumn) asNumericUtilities(returnable, arg0);
 			return returnable;
 		}
+		
+		public static <T extends Comparable<? super T> & java.io.Serializable> Class<?> contentClass(DataColumn<T> arg0) {
+			if(!(null==arg0.type))
+				return arg0.type;
+			else if(arg0.isEmpty())
+				return null;
+			else {
+				for(T t : arg0) {
+					/* New structure means an all NA column
+					 * should have a null type*/
+					if(!TheoreticalValue.isTheoretical(t))
+						return (arg0.type = t.getClass());
+					else continue;
+				}
+			}
+			return arg0.type;
+		}
+		
+		public static <T extends Comparable<? super T> & java.io.Serializable> boolean isConvertableToNumeric(DataColumn<T> arg0) {
+			if(arg0.isNumeric()) {
+				arg0.checkedForConvertable = true;
+				arg0.isConvertable = true;
+				arg0.conversionType = contentClass(arg0);
+				return true;
+			} else if(arg0.checkedForConvertable)
+				return arg0.isConvertable;
+			if( numericConversionType(arg0)==null ) {
+				arg0.checkedForConvertable = true;
+				arg0.isConvertable = false;
+				return false;
+			}
+			arg0.checkedForConvertable = true;
+			arg0.isConvertable = true;
+			return true;
+		}
+		
+		public static <T extends Comparable<? super T> & java.io.Serializable> boolean isNumeric(DataColumn<T> arg0) {
+			if(!arg0.checkedForNumericism) {
+				if(arg0.isEmpty())
+					return false;
+				arg0.isNumeric = Number.class.isAssignableFrom(contentClass(arg0));
+				arg0.checkedForNumericism = true;
+				return arg0.isNumeric;
+			} else return arg0.isNumeric;
+		}
+
+		public static <T extends Comparable<? super T> & java.io.Serializable> Class<?> numericConversionType(DataColumn<T> arg0) {
+			if(isNumeric(arg0))						//The generic type was declared so we know it
+				return arg0.type;
+			else if(!(null == arg0.conversionType))		//We have already found the type
+				return arg0.conversionType;
+			else {										//It is a string type -- need to find conversion
+				int cutoff = arg0.size() < 20 ? arg0.size() : 	//If it's too short, just loop it all
+									 arg0.size()/3;				//For now let's cutoff at the halfway point to save time
+				int start = 0;
+				String col = ((Vector<T>)arg0).toString().toLowerCase();			//String representation of column
+				boolean possibleDouble = col.contains("e") || col.contains(".");	//A double will have a . or e
+				for(T t : arg0) {
+					if(start++ == cutoff)				//Now we only look at a portion of the column to determine
+						return arg0.conversionType;
+					String ts = t.toString(); 			//String version for pattern matching...
+					if( numberCouldBeInteger(ts) ) {	//Could it be an integer? Don't negate if is possibleDouble because of X.0 corner case
+						arg0.conversionType = Integer.class;
+					} else if( possibleDouble && numberCouldBeDouble(ts) ) {
+						return (arg0.conversionType = Double.class); 	//Hierarchical. If double, automatically return double
+					} else if(!TheoreticalValue.isTheoretical(t)) return null; 	//Skip out early if it isnt int, double, NA, inf, etc
+				}
+				return arg0.conversionType;
+			}
+		}
+		
+		private static boolean numberCouldBeInteger(String ts) {
+			return ts.matches("[-+]?[0-9]+"); // << Should handle everything
+		}
+		
+		private static boolean numberCouldBeDouble(String ts) {
+			return ts.matches("[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?");
+		}
 	}
 	
 	/**
@@ -581,6 +662,9 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 			return old;
 		}
 	}
+	
+	
+	
 	
 	
 	/**
@@ -794,20 +878,7 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	 * @return the class of the column contents
 	 */
 	public final Class<?> contentClass() {
-		if(!(null==type))
-			return type;
-		else if(this.isEmpty())
-			return null;
-		else {
-			for(T t : this) {
-				/* New structure means an all NA column
-				 * should have a null type*/
-				if(!TheoreticalValue.isTheoretical(t))
-					return (type = t.getClass());
-				else continue;
-			}
-		}
-		return type;
+		return TypeConversionUtils.contentClass(this);
 	}
 	
 	/**
@@ -918,21 +989,7 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	 * @return whether the DataColumn can be converted to a numeric type
 	 */
 	public final boolean isConvertableToNumeric() {
-		if(isNumeric()) {
-			checkedForConvertable = true;
-			isConvertable = true;
-			conversionType = contentClass();
-			return true;
-		} else if(checkedForConvertable)
-			return isConvertable;
-		if( numericConversionType()==null ) {
-			checkedForConvertable = true;
-			isConvertable = false;
-			return false;
-		}
-		checkedForConvertable = true;
-		isConvertable = true;
-		return true;
+		return TypeConversionUtils.isConvertableToNumeric(this);
 	}
 	
 	/**
@@ -941,13 +998,7 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	 * @return whether the column is numeric
 	 */
 	public final boolean isNumeric() {
-		if(!checkedForNumericism) {
-			if(this.isEmpty())
-				return false;
-			isNumeric = Number.class.isAssignableFrom(contentClass());
-			checkedForNumericism = true;
-			return isNumeric;
-		} else return isNumeric;
+		return TypeConversionUtils.isNumeric(this);
 	}
 	
 	/* -- Intra-DataTable sorts -- */
@@ -1017,36 +1068,7 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	 * @return the class the column will convert to if called 'asNumeric()'
 	 */
 	protected final Class<?> numericConversionType() {
-		if(isNumeric())							//The generic type was declared so we know it
-			return type;
-		else if(!(null == conversionType))		//We have already found the type
-			return conversionType;
-		else {									//It is a string type -- need to find conversion
-			int cutoff = this.size() < 20 ? this.size() : //If it's too short, just loop it all
-							this.size()/3;		//For now let's cutoff at the halfway point to save time
-			int start = 0;
-			String col = super.toString().toLowerCase();						//String representation of column
-			boolean possibleDouble = col.contains("e") || col.contains(".");	//A double will have a . or e
-			for(T t : this) {
-				if(start++ == cutoff)			//Now we only look at a portion of the column to determine
-					return conversionType;
-				String ts = t.toString(); 		//String version for pattern matching...
-				if( numberCouldBeInteger(ts) ) {//Could it be an integer? Don't negate if is possibleDouble because of X.0 corner case
-					conversionType = Integer.class;
-				} else if( possibleDouble && numberCouldBeDouble(ts) ) {
-					return (conversionType = Double.class); 	//Hierarchical. If double, automatically return double
-				} else if(!TheoreticalValue.isTheoretical(t)) return null; 	//Skip out early if it isnt int, double, NA, inf, etc
-			}
-			return conversionType;
-		}
-	}
-	
-	private boolean numberCouldBeInteger(String ts) {
-		return ts.matches("[-+]?[0-9]+"); // << Should handle everything
-	}
-	
-	private boolean numberCouldBeDouble(String ts) {
-		return ts.matches("[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?");
+		return TypeConversionUtils.numericConversionType(this);
 	}
 	
 	/**
@@ -1299,13 +1321,13 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	 * else if will print info regarding the column's attributes
 	 */
 	public void summary() {
-		try {
+		if(this.isNumeric()) //If numeric
 			ArithmeticOperations.summary(this);
-		} catch(NumberFormatException e) { //If not numeric
+		else { //If not numeric
 			System.out.println(this.name);
-			System.out.println("Width:\t" + this.width());
-			System.out.println("Type:\t" + this.contentClass());
-			System.out.println("Size:\t" + this.size());
+			System.out.println("Width:\t" 	+ this.width());
+			System.out.println("Type:\t" 	+ this.contentClass());
+			System.out.println("Size:\t" 	+ this.size());
 		}
 		System.out.println(System.getProperty("line.separator"));
 	}
