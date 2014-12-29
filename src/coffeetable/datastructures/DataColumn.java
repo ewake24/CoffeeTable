@@ -1031,7 +1031,7 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 				if(start++ == cutoff)			//Now we only look at a portion of the column to determine
 					return conversionType;
 				String ts = t.toString(); 		//String version for pattern matching...
-				if( numberCouldBeInteger(ts) && !possibleDouble ) {//Could it be an integer?
+				if( numberCouldBeInteger(ts) ) {//Could it be an integer? Don't negate if is possibleDouble because of X.0 corner case
 					conversionType = Integer.class;
 				} else if( possibleDouble && numberCouldBeDouble(ts) ) {
 					return (conversionType = Double.class); 	//Hierarchical. If double, automatically return double

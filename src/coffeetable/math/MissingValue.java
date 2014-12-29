@@ -1,6 +1,5 @@
 package coffeetable.math;
 
-import java.io.Serializable;
 import java.util.regex.Pattern;
 
 /**
@@ -12,7 +11,7 @@ import java.util.regex.Pattern;
  * @author Taylor G Smith
  * @see Number
  */
-public final class MissingValue extends TheoreticalValue implements Comparable<Number>, Serializable {
+public final class MissingValue extends TheoreticalValue implements Comparable<Number>, java.io.Serializable {
 	private static final long serialVersionUID = 8685839276702330957L;
 	private static final Pattern pattern = Pattern.compile("[\\< \\> \\/]");
 	private static Integer value = Integer.MIN_VALUE;

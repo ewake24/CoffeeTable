@@ -1,15 +1,14 @@
 package coffeetable.math;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashSet;
 
 import coffeetable.utils.InfinityException;
 
-public final class Infinite extends TheoreticalValue implements Comparable<Number>, Serializable {
+public final class Infinite extends TheoreticalValue implements Comparable<Number>, java.io.Serializable {
 	private static final long serialVersionUID = 4527336245481667931L;
 	private final static HashSet<String> acceptable = new HashSet<String>(
-		Arrays.asList( new String[] {"inf","infinite","infinity"} )
+		Arrays.asList( new String[] {"inf","infinite","infinity","°"} )
 	);
 	private final int posOrNeg;
 	private final String rep;
@@ -60,8 +59,11 @@ public final class Infinite extends TheoreticalValue implements Comparable<Numbe
 		return s.equals("inf") || s.equals("-inf")
 			|| s.equals("infinite") || s.equals("-infinite")
 			|| s.equals("infinity") || s.equals("-infinity")
+			|| s.equals("°")
 			|| (o instanceof Double 
-				&& o.equals(Double.POSITIVE_INFINITY));
+				&& o.equals(Double.POSITIVE_INFINITY))
+			|| (o instanceof Double
+				&& o.equals(Double.NEGATIVE_INFINITY));
 	}
 
 	public float floatValue() {

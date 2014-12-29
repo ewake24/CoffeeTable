@@ -1,6 +1,5 @@
 package coffeetable.datatypes;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 
@@ -10,7 +9,7 @@ import java.util.LinkedHashSet;
  * in predictive analytics packages
  * @author Taylor G Smith
  */
-public final class Factor implements Comparable<Object>, Serializable {
+public final class Factor implements Comparable<Object>, java.io.Serializable {
 	private static final long serialVersionUID = 910691899601707948L;
 	private final String representation;
 	private final int level;

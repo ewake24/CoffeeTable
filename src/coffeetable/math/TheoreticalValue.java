@@ -1,12 +1,10 @@
 package coffeetable.math;
 
-import java.io.Serializable;
-
 /**
  * A super, abstract class to be extended by MissingValue, Infinite and NaN classes
  * @author Taylor G Smith
  */
-public abstract class TheoreticalValue extends Number implements Comparable<Number>, Serializable {
+public abstract class TheoreticalValue extends Number implements Comparable<Number>, java.io.Serializable {
 	private static final long serialVersionUID = -2114691753319679398L;
 
 	@Override
