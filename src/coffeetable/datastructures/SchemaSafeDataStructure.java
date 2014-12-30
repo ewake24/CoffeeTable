@@ -297,7 +297,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * @param index
 	 * @return DataColumn at specified index
 	 */
-	public DataColumn<?> getColumn(int index) {
+	public final DataColumn<?> getColumn(int index) {
 		return cols.get(index);
 	}
 	
@@ -307,7 +307,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * @param name
 	 * @return DataColumn with specified name
 	 */
-	public DataColumn<?> getColumn(String name) {
+	public final DataColumn<?> getColumn(String name) {
 		ArrayList<String> names = new ArrayList<String>(columnNames());
 		return this.getColumn(names.indexOf(name));
 	}
@@ -337,7 +337,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * @param index
 	 * @return DataRow at specified index
 	 */
-	public DataRow getRow(int index) {
+	public final DataRow getRow(int index) {
 		return rows.get(index);
 	}
 	
@@ -345,7 +345,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * @param name
 	 * @return DataRow with specified name
 	 */
-	public DataRow getRow(String name) {
+	public final DataRow getRow(String name) {
 		ArrayList<String> names = new ArrayList<String>(rowNames());
 		return this.getRow(names.indexOf(name));
 	}
@@ -373,7 +373,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * @param col
 	 * @return the index of a particular column
 	 */
-	public int indexOf(DataColumn col) {
+	public final int indexOf(DataColumn col) {
 		return cols.indexOf(col);
 	}
 	
@@ -382,7 +382,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * @param row
 	 * @return the index of a particular row
 	 */
-	public int indexOf(DataRow row) {
+	public final int indexOf(DataRow row) {
 		return rows.indexOf(row);
 	}
 	
@@ -500,7 +500,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * Return a collection of the container's rows
 	 * @return collection of the container's rows
 	 */
-	public ArrayList<DataRow> rows() {
+	public final ArrayList<DataRow> rows() {
 		return rows;
 	}
 	
