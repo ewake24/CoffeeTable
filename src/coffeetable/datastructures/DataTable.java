@@ -7,12 +7,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.TreeMap;
 
 import coffeetable.datatypes.Factor;
 import coffeetable.interfaces.RowUtilities;
@@ -38,20 +35,14 @@ import coffeetable.math.Infinite;
  * @see SchemaSafeDataStructure
  */
 @SuppressWarnings("rawtypes")
-public class DataTable extends SchemaSafeDataStructure implements java.io.Serializable, Cloneable, RowUtilities {
+public class DataTable extends RenderableSchemaSafeDataStructure implements java.io.Serializable, Cloneable, RowUtilities {
 	private static final long serialVersionUID = -246560507184440061L;
-	private String tableName;
-	
-	{
-		tableName = "New Table";
-	}
 	
 	/**
 	 * Instantiate an empty DataTable
 	 */
 	public DataTable() {
 		super();
-		setOptions();
 	}
 	
 	/**
@@ -92,7 +83,6 @@ public class DataTable extends SchemaSafeDataStructure implements java.io.Serial
 	protected DataTable(int cols) {
 		super( defaultNumRows,cols );
 		this.setOptions("default.num.cols", cols);
-		setOptions();
 	}
 	
 	/**
@@ -117,13 +107,6 @@ public class DataTable extends SchemaSafeDataStructure implements java.io.Serial
 		this.setOptions("default.num.rows", rows);
 		this.setOptions("default.num.cols", cols);
 		setName(name);
-		setOptions();
-	}
-
-	private final void setOptions() {
-		super.addOption("max.print", 10000);	//What point the print-to-console cuts off
-		super.addOption("col.whitespace", 4);	//Space between columns
-		super.addOption("default.head", 6);		//Num rows in default printHead()
 	}
 	
 	/*--------------------------------------------------------------------*/
@@ -164,10 +147,10 @@ public class DataTable extends SchemaSafeDataStructure implements java.io.Serial
 	 */
 	final static class TableRowSorter {
 		private static void refactor( DataTable table, List<Integer> sorted ) {
-			List<DataRow> r = new ArrayList<DataRow>(table.rows);
+			List<DataRow> r = new ArrayList<DataRow>(table.rows());
 			List<String> colNames = new ArrayList<String>(table.columnNames());
-			table.rows.clear();
-			table.cols.clear();
+			table.rows().clear();
+			table.columns().clear();
 			for(Integer i : sorted)
 				table.addRow( r.get(i) );
 			table.setColNames(colNames);
@@ -177,13 +160,13 @@ public class DataTable extends SchemaSafeDataStructure implements java.io.Serial
 		 * If table comprises only of one column, this is the most efficient way to sort it
 		 */
 		private static void refactorTableFromSingleColumn(DataTable table, boolean ascending) {
-			DataColumn tmp = table.cols.get(0);
+			DataColumn tmp = table.columns().get(0);
 			if(ascending)
 				tmp.sortAscending();
 			else tmp.sortDescending();
 			
-			table.rows.clear();
-			table.cols.clear();
+			table.rows().clear();
+			table.columns().clear();
 			table.addColumn(tmp);
 		}
 		
@@ -199,10 +182,10 @@ public class DataTable extends SchemaSafeDataStructure implements java.io.Serial
 		private static void sort(DataTable table, DataColumn col, boolean asc) {
 			if(table.isEmpty())
 				return;
-			else if(table.cols.size() == 1) {
+			else if(table.columns().size() == 1) {
 				refactorTableFromSingleColumn(table,asc);
 				return;
-			} else if(table.rows.size() == 1)
+			} else if(table.rows().size() == 1)
 				return;
 			
 			List<Integer> orderToSort = asc ? col.sortedAscendingMapEntries() : col.sortedDescendingMapEntries();
@@ -216,13 +199,13 @@ public class DataTable extends SchemaSafeDataStructure implements java.io.Serial
 	 */
 	final static class BatchModUtilities {
 		static boolean inRange_col(DataTable dt, int bottom, int top, boolean inclusive) {
-			return inclusive ? (bottom >= 0) && (top <= dt.cols.size()-1) && (bottom <= top) :
-						(bottom >= -1) && (top <= dt.cols.size()) && (bottom < top) && (top-bottom>1); //Must be at least one between them
+			return inclusive ? (bottom >= 0) && (top <= dt.columns().size()-1) && (bottom <= top) :
+						(bottom >= -1) && (top <= dt.columns().size()) && (bottom < top) && (top-bottom>1); //Must be at least one between them
 		}
 		
 		static boolean inRange_row(DataTable dt, int bottom, int top, boolean inclusive) {
-			return inclusive ? (bottom >= 0) && (top <= dt.rows.size()-1) && (bottom <= top) :
-						(bottom >= -1) && (top <= dt.rows.size()) && (bottom < top) && (top-bottom>1); //Must be at least one between them
+			return inclusive ? (bottom >= 0) && (top <= dt.rows().size()-1) && (bottom <= top) :
+						(bottom >= -1) && (top <= dt.rows().size()) && (bottom < top) && (top-bottom>1); //Must be at least one between them
 		}
 		
 		static Collection<DataColumn> removeColumnRange(DataTable dt, int lo, int hi, boolean inclusive) {
@@ -288,11 +271,11 @@ public class DataTable extends SchemaSafeDataStructure implements java.io.Serial
 		}
 		
 		private boolean diceWithAllColumns() {
-			return (colStart==0 && colEnd==dt.cols.size()-1);
+			return (colStart==0 && colEnd==dt.columns().size()-1);
 		}
 		
 		private boolean diceWithAllRows() {
-			return (rowStart==0 && rowEnd==dt.rows.size()-1);
+			return (rowStart==0 && rowEnd==dt.rows().size()-1);
 		}
 		
 		public DataTable dice() {
@@ -320,8 +303,8 @@ public class DataTable extends SchemaSafeDataStructure implements java.io.Serial
 	 */
 	protected final void addRowFromCsvParser(DataRow row) {
 		ContentFactory.schemaAssignment(this, row);
-		rows.add(row);
-		if(cols.isEmpty())
+		rows().add(row);
+		if(columns().isEmpty())
 			ContentFactory.addEmptyColsWithInitPopulate(this,row,true);
 		else ContentFactory.addToExistingCols(this,row, true);
 	}
@@ -396,11 +379,11 @@ public class DataTable extends SchemaSafeDataStructure implements java.io.Serial
 	 */
 	public final DataTable completeCases() {
 		DataTable dt = (DataTable) this.clone();
-		for(int i = 0; i < dt.rows.size(); i++) {
-			if(i >= dt.rows.size())
+		for(int i = 0; i < dt.rows().size(); i++) {
+			if(i >= dt.rows().size())
 				break;
 			
-			if(dt.rows.get(i).containsNA())
+			if(dt.rows().get(i).containsNA())
 				dt.removeRow(i--);
 		}
 		return dt;
@@ -413,7 +396,7 @@ public class DataTable extends SchemaSafeDataStructure implements java.io.Serial
 	public final boolean convertTableToCharacter() {
 		if(this.isEmpty())
 			return false;
-		ArrayList<DataColumn> oldCols = new ArrayList<DataColumn>(cols);
+		ArrayList<DataColumn> oldCols = new ArrayList<DataColumn>(columns());
 		ArrayList<String> rowNames = new ArrayList<String>(this.rowNames());
 		this.clear();
 		for(DataColumn c : oldCols) {
@@ -430,11 +413,11 @@ public class DataTable extends SchemaSafeDataStructure implements java.io.Serial
 	public final boolean convertTableToNumeric() {
 		if(this.isEmpty())
 			return false;
-		Class<?> converter = NumericClassHierarchy.highestCommonConvertableClass(cols);
+		Class<?> converter = NumericClassHierarchy.highestCommonConvertableClass(columns());
 		if(converter.equals(String.class))
 			return false;
 		
-		ArrayList<DataColumn> oldCols = new ArrayList<DataColumn>(cols);
+		ArrayList<DataColumn> oldCols = new ArrayList<DataColumn>(columns());
 		ArrayList<String> rowNames = new ArrayList<String>(this.rowNames());
 		this.clear();
 		for(DataColumn c : oldCols) {
@@ -453,10 +436,11 @@ public class DataTable extends SchemaSafeDataStructure implements java.io.Serial
 	}
 	
 	public Object clone() {
-		DataTable clone = new DataTable(rows, tableName);
+		DataTable clone = new DataTable(rows(), tableName);
 		for(String key : this.options().keySet())
 			clone.setOptions(key, this.options().get(key));
-		clone.exceptionLog = this.exceptionLog;
+		for(Exception e : exceptionLog())
+			clone.logException(e);
 		clone.setRenderedState(super.isRendered());
 		clone.setColNames(new ArrayList<String>(this.columnNames()));
 		
@@ -486,13 +470,6 @@ public class DataTable extends SchemaSafeDataStructure implements java.io.Serial
 	}
 	
 	/**
-	 * Returns the name of the DataTable
-	 */
-	public String name() {
-		return tableName;
-	}
-	
-	/**
 	 * Will parse a file to an instance DataTable. The CsvParser will detect
 	 * numeric types if told to, but this operation may take slightly longer.
 	 * It is recommended the parameter, 'renderstate', be set to true, as this
@@ -516,110 +493,6 @@ public class DataTable extends SchemaSafeDataStructure implements java.io.Serial
 			csv.disableRenderState();
 		csv.parse();
 		return csv.dataTable();
-	}
-	
-	/**
-	 * Render the DataTable in the console
-	 */
-	public final void print() {
-		printHead(rows.size());
-	}
-	
-	/**
-	 * Print the first n rows of the DataTable where n
-	 * is defined by getOption("default.head")
-	 */
-	public final void printHead() {
-		printHead( options().get("default.head") );
-	}
-	
-	/**
-	 * Print the first n rows of the DataTable where n
-	 * is defined by the parameter, rows
-	 * @param rows - the number of rows to render
-	 */
-	public final void printHead(int rows) {
-		if(rows > this.rows.size())
-			rows = this.rows.size();
-		printTable(rows);
-	}
-	
-	/**
-	 * Determine the number of spaces to place between each item
-	 * @param colToWidth
-	 * @param content
-	 * @param col
-	 * @param whitespace
-	 * @return
-	 */
-	private final String printerHelper(TreeMap<Integer, Integer> colToWidth, String content, int col, int whitespace) {
-		int columnWidth = colToWidth.get(col);		//The widest point of this column
-		int desiredWidth= columnWidth + whitespace;	//The rendered size of this column
-		int itemWidth = content.length();			//Length of the content
-		int deficit = desiredWidth - itemWidth;		//The number of spaces to add
-		
-		if(deficit < 0)
-			throw new NegativeArraySizeException("There is an issue with " +
-					"the type conversion method. " + "Please contact the author " +
-					"(see the Javadoc for contact info)");
-		
-		char[] repeat = new char[deficit];
-		Arrays.fill(repeat, ' ');
-		return content + new String(repeat);
-	}
-	
-	private void printTable(int rows) {
-		if(this.isEmpty()) {
-			System.out.println(new String()); 
-			return;
-		}
-		int colWhitespace = options().get("col.whitespace");
-		int maxPrint = options().get("max.print");
-		
-		/* First generate the HashMap storing the column to the width
-		 * Col number : col width */
-		TreeMap<Integer, Integer> colToWidth = new TreeMap<Integer, Integer>();
-		int index = 0;
-		for( DataColumn column : cols )
-			colToWidth.put( index++, column.width() );
-	
-		/* Table/column names: */
-		System.out.println("# -- " + tableName + " -- #");
-		LinkedList<String> colnames = new LinkedList<String>(columnNames());
-		StringBuilder names = new StringBuilder();
-		for(int i = 0; i < colnames.size(); i++) {
-			String name = colnames.get(i);
-			
-			/* //Adds space for the length of the i appendage -- unimplemented for now
-			if(name.equals("DataColumn")) {
-				if(colWhitespace < 2) {
-					colWhitespace += Integer.valueOf(colnames.size()).toString().length();
-					this.setOptions("col.whitespace", colWhitespace);
-				}
-				name = name + (i+1);
-			} */
-			
-			names.append(printerHelper(colToWidth, name, i, colWhitespace));
-		}
-		System.out.println(names.toString());
-		
-		/* Rows: */
-		int rowCount = 0;
-		for( int row = 0; row < rows; row++ ) {
-			DataRow d = this.rows.get(row);
-			if(rowCount++ == maxPrint) {
-				System.out.println(" [ reached getOption(\"max.print\") -- omitted " + (this.rows.size()-maxPrint) + " rows ]");
-				break;
-			}
-			
-			StringBuilder sb = new StringBuilder();
-			for( int col = 0; col < d.size(); col++ ) {
-				String content = d.get(col).toString();
-				sb.append(printerHelper(colToWidth, content, col, colWhitespace));
-			}
-			System.out.println(sb.toString());
-		}
-		System.out.println();
 	}
 	
 	public final static DataTable readFromSerializedObject(FileInputStream fileIn) throws IOException, ClassNotFoundException {
@@ -652,38 +525,11 @@ public class DataTable extends SchemaSafeDataStructure implements java.io.Serial
 	}
 	
 	/**
-	 * Set the name of the DataTable. Note: <tt>null</tt> or empty
-	 * Strings are not acceptable names
-	 */
-	public void setName(String name) {
-		tableName = (null == name || name.isEmpty()) ? "New Table" : name; 
-	}
-	
-	/**
-	 * Set the respective row names given a List of Strings.
-	 * The method will throw an exception for a list longer than 
-	 * the number of rows, but will not fail if the provided
-	 * list is shorter than the number of rows; it will merely
-	 * not name the omitted rows
-	 * @param names
-	 */
-	public void setRowNames(List<String> names) {
-		if(names.size() > rows.size())
-			throw new IllegalArgumentException();
-		else if(names.isEmpty() || names.size()==0)
-			return;
-		else {
-			for(int i = 0; i < names.size(); i++)
-				rows.get(i).setName(names.get(i));
-		}
-	}
-	
-	/**
 	 * Sort the entire DataTable in order of a DataColumn sorted ascending
 	 * @param col
 	 */
 	public final void sortAscending(DataColumn col) {
-		if(!cols.contains(col))
+		if(!columns().contains(col))
 			throw new IllegalArgumentException("Column does not exist");
 		TableRowSorter.sortRowsAscending(col, this);
 	}
@@ -693,7 +539,7 @@ public class DataTable extends SchemaSafeDataStructure implements java.io.Serial
 	 * @param col
 	 */
 	public final void sortDescending(DataColumn col) {
-		if(!cols.contains(col))
+		if(!columns().contains(col))
 			throw new IllegalArgumentException("Column does not exist");
 		TableRowSorter.sortRowsDescending(col, this);
 	}
@@ -706,11 +552,11 @@ public class DataTable extends SchemaSafeDataStructure implements java.io.Serial
 	 * @return a subset DataTable that meets the conditions in the SubsettableCondition class
 	 */
 	public final DataTable subsetByCondition(DataColumn eval, SubsettableCondition sub) {
-		if(!cols.contains(eval))
+		if(!columns().contains(eval))
 			throw new IllegalArgumentException("Specified column not found in table");
 		boolean[] keeps = eval.subsetLogicalVector(sub);
 		
-		DataTable dt = new DataTable(rows, tableName+"_Subset");
+		DataTable dt = new DataTable(rows(), tableName+"_Subset");
 		for(String key : this.options().keySet())
 			dt.setOptions(key, this.options().get(key));
 		
@@ -718,7 +564,7 @@ public class DataTable extends SchemaSafeDataStructure implements java.io.Serial
 		dt.setRowNames(new ArrayList<String>(this.rowNames()));
 		
 		int j = 0;
-		for(int i = 0; i < rows.size(); i++) {
+		for(int i = 0; i < rows().size(); i++) {
 			if(!keeps[i])
 				dt.removeRow(j);
 			else j++; //Only increments if true
@@ -735,13 +581,13 @@ public class DataTable extends SchemaSafeDataStructure implements java.io.Serial
 		if(this.isEmpty())
 			throw new NullPointerException();
 		Class<?> converter = null;
-		if(!schema.isSingular()) { //If not all the same class of Cols
-			converter = NumericClassHierarchy.highestCommonConvertableClass(cols);
-		} else converter = schema.getContentClass();
+		if(!schema().isSingular()) { //If not all the same class of Cols
+			converter = NumericClassHierarchy.highestCommonConvertableClass(columns());
+		} else converter = schema().getContentClass();
 		
 		List<DataRow> numericDCs = new ArrayList<DataRow>();
 		List<String> newColNames = new ArrayList<String>(rowNames());
-		for(DataColumn d : cols) {
+		for(DataColumn d : columns()) {
 			/* Need to assess here instead of in DataColumn control logic to ensure highest common
 			 * convertable class (for table) is used, where DataColum will not look at all columns, 
 			 * but only the one being converted */
@@ -765,7 +611,8 @@ public class DataTable extends SchemaSafeDataStructure implements java.io.Serial
 			dt.setOptions(key, this.options().get(key));
 		
 		dt.setRenderedState( this.isRendered() );
-		dt.exceptionLog = this.exceptionLog;
+		for(Exception e : exceptionLog())
+			dt.logException(e);
 		
 		return dt;
 	}

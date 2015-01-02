@@ -20,6 +20,7 @@ import coffeetable.datatypes.Factor;
 import coffeetable.math.Infinite;
 import coffeetable.math.MissingValue;
 import coffeetable.math.TheoreticalValue;
+import coffeetable.utils.DimensionMismatchException;
 import coffeetable.utils.MissingValueException;
 import coffeetable.utils.SchemaMismatchException;
 
@@ -31,6 +32,7 @@ import coffeetable.utils.SchemaMismatchException;
  * @author Taylor G Smith
  * @param <T>
  */
+@SuppressWarnings("rawtypes")
 public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> extends Vector<T> implements java.io.Serializable {
 	private static final long serialVersionUID = 1872913776989418759L;
 	private final static int defaultSize = 15;
@@ -41,6 +43,15 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 		public int compare(Object s1, Object s2) {
 			return Integer.valueOf(s1.toString().length()).
 					compareTo(Integer.valueOf(s2.toString().length()));
+		}
+	};
+	
+	/**
+	 * Comparator for sorting a column based on object frequency
+	 */
+	private transient final static Comparator<Map.Entry<Object,Integer>> freqCompar = new Comparator<Map.Entry<Object,Integer>>() {
+		public int compare(Map.Entry<Object,Integer> arg0, Map.Entry<Object,Integer> arg1) {
+			return arg0.getValue().compareTo(arg1.getValue());
 		}
 	};
 	
@@ -125,80 +136,54 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	
 	
 	/*--------------------------------------------------------------------*/
-	/* PRIVATE CLASSES FOR OPERATIONS */
-	/**
-	 * A private static class for use with numerically-typed DataColumns. Implements various
-	 * statistical and vector-based operations in a fashion similar to an R dataframe.
-	 * 
-	 * Unless otherwise specified by an internal method, any column passed in will implicitly
-	 * be converted to character for Double.parseDouble(...) to work.  This is due to the nature
-	 * of generics not allowing Object casting.  Thus, you will see many String casting operations
-	 * or String comparators as a workaround.
-	 * @author Taylor G Smith
-	 */
-	@SuppressWarnings("rawtypes")
-	private static class ArithmeticOperations {
+	/* PRIVATE CLASSES FOR OPERATIONS (ARITHMETIC, ETC) */
+	@SuppressWarnings("unchecked")
+	final class NumericVector<E extends Number & Comparable<? super E>> extends DataColumn<E> {
+		private static final long serialVersionUID = 2552736984902135876L;
+		public final Class<?> content;
+		private DataColumn<String> charRep;
+		
 		/**
 		 * Comparator for sorting a column by double value
 		 */
-		private static Comparator<String> compar = new Comparator<String>() {
+		private Comparator<String> compar = new Comparator<String>() {
 			public int compare(String arg0, String arg1) {
 				return Double.valueOf(Double.parseDouble(arg0)).compareTo(Double.valueOf(Double.parseDouble(arg1)));
 			};
 		};
 		
-		/**
-		 * Comparator for sorting a column based on object frequency
-		 */
-		private static Comparator<Map.Entry<Object,Integer>> freqCompar = new Comparator<Map.Entry<Object,Integer>>() {
-			public int compare(Map.Entry<Object,Integer> arg0, Map.Entry<Object,Integer> arg1) {
-				return arg0.getValue().compareTo(arg1.getValue());
-			}
-		};
-		
-		/**
-		 * Ensure column can be worked with
-		 * @param col
-		 * @return true if the column is valid for arithmetic
-		 */
-		private static boolean check(DataColumn col) {
-			return col.isNumeric() || col.isConvertableToNumeric();
-		}
-		
-		/**
-		 * Set of conditions a method with two cols must adhere to.
-		 * @param col
-		 * @param col2
-		 */
-		private static void dualColumnExceptionHandling(DataColumn col, DataColumn col2) {
-			if(col.size() != col2.size())
-				throw new IllegalArgumentException("Dim mismatch in Euclidean distance");
-		}
-		
-		/**
-		 * Set of conditions any method must adhere to.
-		 * @param col
-		 * @return an arithmetically-prepared DataColumn
-		 */
-		private static DataColumn exceptionHandling(DataColumn col) {
-			exceptionHandlingNoConversion(col);
-			/* This converts the temp column to a string column because	
-			 * the double parsing requires a String and casting to String is faster than
-			 * converting to numeric, back to string and back to numeric.*/
-			if(!col.contentClass().equals(String.class))
-				return col.asCharacter();
-			else return col;
-		}
-		
-		/**
-		 * Check for column population
-		 * @param col
-		 */
-		private static void exceptionHandlingNoConversion(DataColumn col) {
+		NumericVector(DataColumn<E> col) {
+			super(col);
+			if(!col.isNumeric())
+				throw new NumberFormatException();
 			if(col.isEmpty())
 				throw new NullPointerException();
-			if(!check(col))
-				throw new NumberFormatException();
+			
+			setName(col.name);
+			content = super.contentClass();
+			charRep = super.asCharacter();
+		}
+		
+		public Class<?> highestCommonConvertableClass(NumericVector col) {
+			if(content.equals(Double.class) || col.content.equals(Double.class))
+				return Double.class;
+			else return Integer.class;
+		}
+		
+		public E convertDoubleToInteger(double d) {
+			return (E)new Integer((int) d);
+		}
+		
+		public E convertDoubleToE(double d) {
+			return (E)new Double(d);
+		}
+		
+		public E convertIntegerToDouble(int i) {
+			return (E)new Double((double) i);
+		}
+		
+		public E convertIntegerToE(int i) {
+			return (E)new Integer(i);
 		}
 		
 		/**
@@ -207,62 +192,58 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 		 * @param col2
 		 * @return similarity score between two vectors
 		 */
-		public static double euclideanDistance(DataColumn col, DataColumn col2) {
-			col = exceptionHandling(col);
-			col2 = exceptionHandling(col2);
-			dualColumnExceptionHandling(col,col2);
+		public double euclideanDistance(NumericVector<E> col2) {
+			if(this.size() != col2.size())
+				throw new DimensionMismatchException("Dim mismatch");
 			
 			double answer = 0;
-			for(int i = 0; i < col.size(); i++) {
-				answer += Math.pow(new Double((String)col.get(i)) - 
-							new Double((String)col2.get(i)), 2);
+			for(int i = 0; i < this.size(); i++) {
+				answer += Math.pow(new Double(charRep.get(i)) - new Double(col2.charRep.get(i)), 2);
 			}
 			return Math.sqrt(answer);
 		}
 		
-		private static DataColumn filterMissing(DataColumn col) {
+		private NumericVector<E> filterMissing(NumericVector<E> col) {
 			for(int i = 0; i < col.size(); i++) {
 				if(TheoreticalValue.isTheoretical((col.get(i))))
 					col.remove(i--); //Subtract to move back and reassess new position
 			}
+			
+			col.charRep = col.asCharacter();
 			return col;
 		}
 		
-		/**
-		 * Calculate inner product between two columns (vectors)
-		 * @param col
-		 * @param col2
-		 * @return inner product between two vectors
-		 */
-		public static double innerProduct(DataColumn col, DataColumn col2) {
-			col = exceptionHandling(col);
-			col2 = exceptionHandling(col2);
-			dualColumnExceptionHandling(col,col2);
+		public E innerProduct(NumericVector<E> col) {
+			if(this.size() != col.size())
+				throw new DimensionMismatchException("Dim mismatch");
 			
 			double answer = 0;
 			for(int i = 0; i < col.size(); i++) {
-				answer += (new Double((String)col.get(i)) * 
-						  new Double((String)col2.get(i)) );
+				answer += (new Double(charRep.get(i)) * 
+						  new Double(col.charRep.get(i)) );
 			}
-			return answer;
+			
+			return (E) (highestCommonConvertableClass(col).equals(Double.class) ? 
+					convertDoubleToE(answer) : convertDoubleToInteger(answer));
 		}
-		
+
 		/**
 		 * Identify maximum in column
 		 * @param col
 		 * @return max in column
 		 */
-		@SuppressWarnings("unchecked")
-		public static double max(DataColumn col) {
-			col = exceptionHandling(col);
-			
-			if(col.contains("NA") || col.contains("Infinity") || col.contains("-Infinity")) //MISSING VAL
+		public E max() {
+			NumericVector<E> col = new NumericVector<E>(this);
+			if(this.containsNA()) { //MISSING VAL
 				col = filterMissing(col);
-			if(col.isEmpty())
-				throw new MissingValueException("Cannot perform arithmetic operation on entirely theoretical row");
+				if(col.isEmpty())
+					throw new MissingValueException("Cannot perform arithmetic operation on entirely theoretical row");
+			}
 			
-			Collections.sort(col, compar);
-			return Double.valueOf((String)col.get(col.size()-1));
+			Collections.sort(col.charRep, compar);
+			double answer = Double.valueOf(col.charRep.get(col.size()-1));
+			return (E) (highestCommonConvertableClass(col).equals(Double.class) ? 
+					convertDoubleToE(answer) : convertDoubleToInteger(answer));
 		}
 		
 		/**
@@ -270,8 +251,8 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 		 * @param col
 		 * @return mean of column
 		 */
-		public static double mean(DataColumn col) {
-			return meanWithCheck(col, false);
+		public double meanBasic() {
+			return meanWithCheck(false);
 		}
 		
 		/**
@@ -281,9 +262,17 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 		 * @param check
 		 * @return
 		 */
-		private static double meanWithCheck(DataColumn col, boolean check) {
-			col = filterMissing(col);
-			return sumWithCheck(col, check) / col.size();
+		private double meanWithCheck(boolean check) {
+			NumericVector<E> col = new NumericVector<E>(this);
+			if(this.containsNA()) { //MISSING VAL
+				col = filterMissing(col);
+				if(col.isEmpty())
+					throw new MissingValueException("Cannot perform arithmetic operation on entirely theoretical row");
+			}
+			E sum = sumWithCheck(check);
+			
+			return highestCommonConvertableClass(col).equals(Integer.class) ? 
+				(Double)convertIntegerToDouble((Integer)sum) / col.size() : (Double)sum / col.size();
 		}
 		
 		/**
@@ -291,72 +280,44 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 		 * @param col
 		 * @return min in column
 		 */
-		@SuppressWarnings("unchecked")
-		public static double min(DataColumn col) {
-			col = exceptionHandling(col);
-			
-			if(col.contains("NA")) //MISSING VAL
+		public E min() {
+			NumericVector<E> col = new NumericVector<E>(this);
+			if(this.containsNA()) { //MISSING VAL
 				col = filterMissing(col);
-			if(col.isEmpty())
-				throw new MissingValueException("Cannot perform arithmetic operation on all-NA row");
-				
-			Collections.sort(col, compar);
-			int comp = 0;
-			if(TheoreticalValue.isTheoretical(col.get(0))) {
-				while( !(TheoreticalValue.isTheoretical(col.get(++comp))) )
-					continue;
+				if(col.isEmpty())
+					throw new MissingValueException("Cannot perform arithmetic operation on entirely theoretical row");
 			}
-			return Double.valueOf((String)col.get(comp));
+			
+			Collections.sort(col.charRep, compar);
+			double answer = Double.valueOf(col.charRep.get(0));
+			return (E) (highestCommonConvertableClass(col).equals(Double.class) ? 
+					convertDoubleToE(answer) : convertDoubleToInteger(answer));
 		}
 		
-		/**
-		 * Identify the most-frequently occurring object in a column
-		 * @param col
-		 * @return most commonly occurring item in column
-		 */
-		@SuppressWarnings("unchecked")
-		public static Object mode(DataColumn col) {
-			exceptionHandlingNoConversion(col);
-			
-			col = filterMissing(col);
-			if(col.isEmpty())
-				throw new MissingValueException("Cannot perform arithmetic operation on all-NA row");
-			
-			/* Less for it to iterate over now */
-			HashSet<Object> rawOcc = new HashSet<Object>();
-			rawOcc.addAll(col);
-			
-			HashMap<Object,Integer> hm = new HashMap<Object,Integer>();
-			ArrayList<Map.Entry<Object,Integer>> list = new ArrayList<Map.Entry<Object,Integer>>();
-			for(Object o : rawOcc)
-				hm.put(o, Collections.frequency(col,o));
-			list.addAll(hm.entrySet());
-			
-			/* Sort by occurrence */
-			Collections.sort(list, freqCompar);
-			return list.get(list.size()-1).getKey();
+		public E range() {
+			E max = max();
+			E min = min();
+			if(content.equals(Double.class))
+				return convertDoubleToE((Double)max - (Double)min);
+			return convertIntegerToE((Integer)max - (Integer)min);
 		}
 		
-		public static double range(DataColumn col) {
-			return max(col) - min(col);
-		}
-		
-		@SuppressWarnings("unchecked")
-		public static DataColumn scaleByFactor(DataColumn col, double scalar) {
-			col = exceptionHandling(col);
+		public NumericVector<Double> scaleByFactorCalc(double scalar) {
+			DataColumn<String> col = (DataColumn<String>) this.clone();
+			col = col.asCharacter();
 			
-			DataColumn newD = new DataColumn(col.size());
+			DataColumn newD = new DataColumn(this.size());
 			newD.checkedForConvertable = true;
 			newD.isNumeric = true;
 			
-			for(Object s : col) {
+			for(String s : col) {
 				if(MissingValue.isNA(s))
 					newD.add(new MissingValue());
 				else if(Infinite.isInfinite(s))
-					newD.add(new Infinite(s.toString()));
-				else newD.add( Double.valueOf((String)s)*scalar );
+					newD.add(new Infinite(s));
+				else newD.add( Double.valueOf(s)*scalar );
 			}
-			return newD;
+			return new NumericVector<Double>(newD);
 		}
 		
 		/**
@@ -364,8 +325,8 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 		 * @param col
 		 * @return standard deviation of column
 		 */
-		public static double standardDeviation(DataColumn col) {
-			return Math.sqrt(variance(col));
+		public double standardDeviationCalc() {
+			return Math.sqrt(varianceCalc());
 		}
 		
 		/**
@@ -373,25 +334,25 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 		 * @param col
 		 * @return sum of column
 		 */
-		public static double sum(DataColumn col) {
-			return sumWithCheck(col, false);
+		public E sumCalc() {
+			return sumWithCheck(false);
 		}
 		
-		public static void summary(DataColumn col) {
-			double sum = sum(col);
-			double mean = mean(col);
-			double std = standardDeviation(col);
-			double max = max(col);
-			double min = min(col);
-			System.out.println(col.name());
+		public void summary() {
+			E sum = sumCalc();
+			double mean = mean();
+			double std = standardDeviationCalc();
+			E max = max();
+			E min = min();
+			System.out.println(name());
 			System.out.println("Sum:\t\t\t" + sum);
 			System.out.println("Mean:\t\t\t" + mean);
 			System.out.println("Standard Deviation:\t" + std);
 			System.out.println("Max:\t\t\t" + max);
 			System.out.println("Min:\t\t\t" + min);
-			System.out.println("Width:\t\t\t" + col.width());
-			System.out.println("Type:\t\t\t" + col.contentClass());
-			System.out.println("Size:\t\t\t" + col.size());
+			System.out.println("Width:\t\t\t" + this.width());
+			System.out.println("Type:\t\t\t" + content);
+			System.out.println("Size:\t\t\t" + this.size());
 		}
 		
 		/**
@@ -403,20 +364,19 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 		 * @param check
 		 * @return sum of column
 		 */
-		private static double sumWithCheck(DataColumn col, boolean check) {
-			if(!check)
-				col = exceptionHandling(col);
-			
-			if(col.contains("NA")) //MISSING VAL
+		private E sumWithCheck(boolean check) {
+			NumericVector<E> col = new NumericVector<E>(this);
+			if(this.containsNA()) { //MISSING VAL
 				col = filterMissing(col);
-			if(col.isEmpty())
-				throw new MissingValueException("Cannot perform arithmetic operation on all-NA row");
+				if(col.isEmpty())
+					throw new MissingValueException("Cannot perform arithmetic operation on entirely theoretical row");
+			}
 			
 			double sum = 0;
-			for(int i = 0; i < col.size(); i++) {
-				sum += new Double((String)col.get(i));
-			}
-			return sum;
+			for(int i = 0; i < col.size(); i++)
+				sum += new Double(col.charRep.get(i));
+			return (E) (highestCommonConvertableClass(col).equals(Double.class) ? 
+					convertDoubleToE(sum) : convertDoubleToInteger(sum));
 		}
 		
 		/**
@@ -424,18 +384,18 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 		 * @param col
 		 * @return variance of column
 		 */
-		public static double variance(DataColumn col) {
-			col = exceptionHandling(col);
-			
-			if(col.contains("NA")) //MISSING VAL
+		public double varianceCalc() {
+			NumericVector<E> col = new NumericVector<E>(this);
+			if(this.containsNA()) { //MISSING VAL
 				col = filterMissing(col);
-			if(col.isEmpty())
-				throw new MissingValueException("Cannot perform arithmetic operation on all-NA row");
+				if(col.isEmpty())
+					throw new MissingValueException("Cannot perform arithmetic operation on entirely theoretical row");
+			}
 			
-			double avg = meanWithCheck(col,true);
+			double avg = meanWithCheck(true);
 			double sum = 0;
-			for( Object o : col ) {
-				sum += (new Double((String)o) - avg) * (new Double((String)o) - avg);
+			for( String o : charRep ) {
+				sum += (new Double(o) - avg) * (new Double(o) - avg);
 			}
 			return sum / (col.size()-1);
 		}
@@ -516,7 +476,7 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 			return returnable;
 		}
 		
-		@SuppressWarnings({ "unchecked", "rawtypes" })
+		@SuppressWarnings({ "unchecked" })
 		public static <T extends Comparable<? super T> & java.io.Serializable> DataColumn<Double> asDouble(DataColumn<T> arg0) {
 			ArrayList collection = new ArrayList(arg0.size());
 			for(T t : arg0) {
@@ -533,7 +493,7 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 			return returnable;
 		}
 		
-		@SuppressWarnings({ "unchecked", "rawtypes" })
+		@SuppressWarnings({ "unchecked" })
 		public static <T extends Comparable<? super T> & java.io.Serializable> DataColumn<Integer> asInteger(DataColumn<T> arg0) {
 			/*if(arg0.contentClass().equals(Integer.class))
 				return (DataColumn) arg0;*/
@@ -733,7 +693,7 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	 * converted to String.
 	 * @return a string-converted instance of DataColumn
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@SuppressWarnings({ "unchecked" })
 	public final DataColumn<String> asCharacter() {			
 		if(this.contentClass().equals(String.class))
 			return (DataColumn) this;
@@ -943,9 +903,9 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	 * @param arg0
 	 * @return vector similarity
 	 */
-	@SuppressWarnings("rawtypes")
+	@SuppressWarnings({ "unchecked" })
 	public final double euclideanDistance(DataColumn arg0) {
-		return ArithmeticOperations.euclideanDistance(this, arg0);
+		return new NumericVector(this).euclideanDistance(new NumericVector(arg0));
 	}
 	
 	public int hashCode() {
@@ -959,9 +919,9 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	 * @param arg0
 	 * @return inner product
 	 */
-	@SuppressWarnings("rawtypes")
-	public final double innerProduct(DataColumn arg0) {
-		return ArithmeticOperations.innerProduct(this, arg0);
+	@SuppressWarnings("unchecked")
+	public final T innerProduct(DataColumn arg0) {
+		return (T) new NumericVector(this).innerProduct(new NumericVector(arg0));
 	}
 	
 	/**
@@ -1002,8 +962,9 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	 * CONVERTABLE to a numeric type
 	 * @return max of column
 	 */
-	public double max() {
-		return ArithmeticOperations.max(this);
+	@SuppressWarnings("unchecked")
+	public T max() {
+		return (T) new NumericVector(this).max();
 	}
 	
 	/**
@@ -1012,8 +973,9 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	 * CONVERTABLE to a numeric type
 	 * @return mean of column
 	 */
+	@SuppressWarnings("unchecked")
 	public final double mean() {
-		return ArithmeticOperations.mean(this);
+		return new NumericVector(this).meanBasic();
 	}
 	
 	/**
@@ -1022,8 +984,9 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	 * CONVERTABLE to a numeric type
 	 * @return min in column
 	 */
-	public double min() {
-		return ArithmeticOperations.min(this);
+	@SuppressWarnings("unchecked")
+	public T min() {
+		return (T) new NumericVector(this).min();
 	}
 	
 	/**
@@ -1033,7 +996,24 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	 */
 	@SuppressWarnings("unchecked")
 	public T mode() {
-		return (T) ArithmeticOperations.mode(this);
+		/* Less for it to iterate over now */
+		HashSet<Object> rawOcc = new HashSet<Object>();
+		rawOcc.addAll(this);
+		
+		HashMap<Object,Integer> hm = new HashMap<Object,Integer>();
+		ArrayList<Map.Entry<Object,Integer>> list = new ArrayList<Map.Entry<Object,Integer>>();
+		for(Object o : rawOcc)
+			hm.put(o, Collections.frequency(this,o));
+		list.addAll(hm.entrySet());
+		
+		/* Sort by occurrence */
+		Collections.sort(list, freqCompar);
+		
+		int i = list.size()-1;
+		T ob;
+		while(TheoreticalValue.isTheoretical( ob = (T)list.get(i--).getKey() ))
+			continue;
+		return ob;
 	}
 	
 	/**
@@ -1164,11 +1144,11 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 			width = this.name.length();
 	}
 	
-	public double range() {
-		return ArithmeticOperations.range(this);
+	@SuppressWarnings("unchecked")
+	public T range() {
+		return (T) new NumericVector(this).range();
 	}
 	
-	@SuppressWarnings("rawtypes")
 	public final static DataColumn readFromSerializedObject(FileInputStream fileIn) throws IOException, ClassNotFoundException {
 		DataColumn d = null;
 		ObjectInputStream in = new ObjectInputStream(fileIn);
@@ -1180,7 +1160,7 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	
 	@SuppressWarnings("unchecked")
 	public final DataColumn<Double> scaleByFactor(double scalar) {
-		return ArithmeticOperations.scaleByFactor(this,scalar);
+		return (DataColumn) new NumericVector(this).scaleByFactorCalc(scalar);
 	}
 
 	/**
@@ -1265,8 +1245,9 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	 * CONVERTABLE to a numeric type
 	 * @return standard deviation of column
 	 */
+	@SuppressWarnings("unchecked")
 	public final double standardDeviation() {
-		return ArithmeticOperations.standardDeviation(this);
+		return new NumericVector(this).standardDeviationCalc();
 	}
 	
 	public final DataColumn<T> subsetByCondition(SubsettableCondition sub) {
@@ -1293,17 +1274,19 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	 * either NOT NUMERIC or NOT CONVERTABLE to a numeric type
 	 * @return sum of column
 	 */
-	public final double sum() {
-		return ArithmeticOperations.sum(this);
+	@SuppressWarnings("unchecked")
+	public final T sum() {
+		return (T) new NumericVector(this).sumCalc();
 	}
 	
 	/**
 	 * Will print the column's descriptive statistics, if any,
 	 * else if will print info regarding the column's attributes
 	 */
+	@SuppressWarnings("unchecked")
 	public void summary() {
 		if(this.isNumeric()) //If numeric
-			ArithmeticOperations.summary(this);
+			new NumericVector(this).summary();
 		else { //If not numeric
 			System.out.println(this.name);
 			System.out.println("Width:\t" 	+ this.width());
@@ -1332,8 +1315,9 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	 * CONVERTABLE to a numeric type
 	 * @return variance of column
 	 */
+	@SuppressWarnings("unchecked")
 	public final double variance() {
-		return ArithmeticOperations.variance(this);
+		return new NumericVector(this).varianceCalc();
 	}
 	
 	/**

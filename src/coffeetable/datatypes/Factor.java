@@ -71,6 +71,10 @@ public final class Factor implements Comparable<Object>, java.io.Serializable {
 	}
 
 	public int compareTo(Object arg0) {
-		return representation.compareTo(arg0.toString());
+		Factor arg = (Factor) arg0;
+		int comp = representation.compareTo(arg.representation);
+		if(comp == 0) {
+			return Integer.valueOf(level).compareTo(arg.level);
+		} return comp;
 	}
 }

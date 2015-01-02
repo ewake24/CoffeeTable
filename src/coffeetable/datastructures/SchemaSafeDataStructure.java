@@ -14,19 +14,22 @@ import coffeetable.utils.DimensionMismatchException;
 import coffeetable.utils.SchemaMismatchException;
 
 /**
- * A super, abstract class for DataTable providing all schema operations
+ * A super, abstract class for DataTable providing all schema operations,
+ * type safety checks, etc. Allows for extensible, lightweight versions
+ * of DataTables, however does not implement printable or type-conversion
+ * methods like DataTable does.
  * @author Taylor G Smith
  */
 @SuppressWarnings("rawtypes")
 public abstract class SchemaSafeDataStructure implements Serializable {
 	private static final long serialVersionUID = -5011930758106873757L;
-	protected final static int defaultNumRows = 25;
-	protected final static int defaultNumCols = 10;
+	public final static int defaultNumRows = 25;
+	public final static int defaultNumCols = 10;
 	
-	protected ArrayList<DataColumn> cols;
-	protected ArrayList<DataRow> rows;
-	protected Schema schema = null;
-	protected ArrayList<Exception> exceptionLog;
+	private ArrayList<DataColumn> cols;
+	private ArrayList<DataRow> rows;
+	private Schema schema = null;
+	private ArrayList<Exception> exceptionLog;
 	private HashMap<String, Integer> options;
 	private boolean isRendered; //cache rendering operations
 	
@@ -54,7 +57,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * @param name
 	 * @param value
 	 */
-	protected final void addOption(String name, int value) {
+	public final void addOption(String name, int value) {
 		if(options.containsKey(name))
 			throw new ConcurrentModificationException("Cannot add existing key ("+name+") to options frame. Use setOptions(name,value) instead");
 		options.put(name, value);
@@ -253,7 +256,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * Returns a collection of the container's columns
 	 * @return collection of the container's columns
 	 */
-	public final ArrayList<DataColumn> columns() {
+	public ArrayList<DataColumn> columns() {
 		return cols;
 	}
 	
@@ -289,7 +292,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * enabled in the CsvParser)
 	 * @return an ArrayList of exceptions the DataTable has encountered
 	 */
-	public final ArrayList<Exception> exceptionLog() {
+	public ArrayList<Exception> exceptionLog() {
 		return exceptionLog;
 	}
 	
@@ -297,7 +300,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * @param index
 	 * @return DataColumn at specified index
 	 */
-	public final DataColumn<?> getColumn(int index) {
+	public DataColumn<?> getColumn(int index) {
 		return cols.get(index);
 	}
 	
@@ -307,7 +310,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * @param name
 	 * @return DataColumn with specified name
 	 */
-	public final DataColumn<?> getColumn(String name) {
+	public DataColumn<?> getColumn(String name) {
 		ArrayList<String> names = new ArrayList<String>(columnNames());
 		return this.getColumn(names.indexOf(name));
 	}
@@ -337,7 +340,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * @param index
 	 * @return DataRow at specified index
 	 */
-	public final DataRow getRow(int index) {
+	public DataRow getRow(int index) {
 		return rows.get(index);
 	}
 	
@@ -345,7 +348,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * @param name
 	 * @return DataRow with specified name
 	 */
-	public final DataRow getRow(String name) {
+	public DataRow getRow(String name) {
 		ArrayList<String> names = new ArrayList<String>(rowNames());
 		return this.getRow(names.indexOf(name));
 	}
@@ -357,7 +360,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * any exceptions have occurred in data manipulation.
 	 * @return true if the container has encountered any exceptions
 	 */
-	public final boolean hasExceptions() {
+	public boolean hasExceptions() {
 		return !exceptionLog.isEmpty();
 	}
 	
@@ -500,7 +503,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * Return a collection of the container's rows
 	 * @return collection of the container's rows
 	 */
-	public final ArrayList<DataRow> rows() {
+	public ArrayList<DataRow> rows() {
 		return rows;
 	}
 	
@@ -587,6 +590,25 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	
 	protected final void setRenderedState(boolean b) {
 		isRendered = b;
+	}
+	
+	/**
+	 * Set the respective row names given a List of Strings.
+	 * The method will throw an exception for a list longer than 
+	 * the number of rows, but will not fail if the provided
+	 * list is shorter than the number of rows; it will merely
+	 * not name the omitted rows
+	 * @param names
+	 */
+	public void setRowNames(List<String> names) {
+		if(names.size() > rows().size())
+			throw new IllegalArgumentException();
+		else if(names.isEmpty() || names.size()==0)
+			return;
+		else {
+			for(int i = 0; i < names.size(); i++)
+				rows().get(i).setName(names.get(i));
+		}
 	}
 	
 	/**
