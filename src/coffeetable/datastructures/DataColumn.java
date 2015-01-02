@@ -137,6 +137,11 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	
 	/*--------------------------------------------------------------------*/
 	/* PRIVATE CLASSES FOR OPERATIONS (ARITHMETIC, ETC) */
+	/**
+	 * Current as of version 1.5 -- inner class to handle all arithmetic operations
+	 * @author Taylor G Smith
+	 * @param <E>
+	 */
 	@SuppressWarnings("unchecked")
 	final class NumericVector<E extends Number & Comparable<? super E>> extends DataColumn<E> {
 		private static final long serialVersionUID = 2552736984902135876L;
@@ -252,24 +257,13 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 		 * @return mean of column
 		 */
 		public double meanBasic() {
-			return meanWithCheck(false);
-		}
-		
-		/**
-		 * Private internal method to save time if exceptions are already handled
-		 * and column is already converted to character (see: sumWithCheck())
-		 * @param col
-		 * @param check
-		 * @return
-		 */
-		private double meanWithCheck(boolean check) {
 			NumericVector<E> col = new NumericVector<E>(this);
 			if(this.containsNA()) { //MISSING VAL
 				col = filterMissing(col);
 				if(col.isEmpty())
 					throw new MissingValueException("Cannot perform arithmetic operation on entirely theoretical row");
 			}
-			E sum = sumWithCheck(check);
+			E sum = sumCalc();
 			
 			return highestCommonConvertableClass(col).equals(Integer.class) ? 
 				(Double)convertIntegerToDouble((Integer)sum) / col.size() : (Double)sum / col.size();
@@ -335,7 +329,18 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 		 * @return sum of column
 		 */
 		public E sumCalc() {
-			return sumWithCheck(false);
+			NumericVector<E> col = new NumericVector<E>(this);
+			if(this.containsNA()) { //MISSING VAL
+				col = filterMissing(col);
+				if(col.isEmpty())
+					throw new MissingValueException("Cannot perform arithmetic operation on entirely theoretical row");
+			}
+			
+			double sum = 0;
+			for(int i = 0; i < col.size(); i++)
+				sum += new Double(col.charRep.get(i));
+			return (E) (highestCommonConvertableClass(col).equals(Double.class) ? 
+					convertDoubleToE(sum) : convertDoubleToInteger(sum));
 		}
 		
 		public void summary() {
@@ -356,30 +361,6 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 		}
 		
 		/**
-		 * Many operations require calling sum first. We don't want to have to
-		 * repeatedly call the exception handling if not necessary, so this can
-		 * be called internally if we have already exception-handled / converted
-		 * to character type
-		 * @param col
-		 * @param check
-		 * @return sum of column
-		 */
-		private E sumWithCheck(boolean check) {
-			NumericVector<E> col = new NumericVector<E>(this);
-			if(this.containsNA()) { //MISSING VAL
-				col = filterMissing(col);
-				if(col.isEmpty())
-					throw new MissingValueException("Cannot perform arithmetic operation on entirely theoretical row");
-			}
-			
-			double sum = 0;
-			for(int i = 0; i < col.size(); i++)
-				sum += new Double(col.charRep.get(i));
-			return (E) (highestCommonConvertableClass(col).equals(Double.class) ? 
-					convertDoubleToE(sum) : convertDoubleToInteger(sum));
-		}
-		
-		/**
 		 * Calculate the variance of a column
 		 * @param col
 		 * @return variance of column
@@ -392,7 +373,7 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 					throw new MissingValueException("Cannot perform arithmetic operation on entirely theoretical row");
 			}
 			
-			double avg = meanWithCheck(true);
+			double avg = meanBasic();
 			double sum = 0;
 			for( String o : charRep ) {
 				sum += (new Double(o) - avg) * (new Double(o) - avg);
@@ -558,7 +539,7 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 		}
 
 		public static <T extends Comparable<? super T> & java.io.Serializable> Class<?> numericConversionType(DataColumn<T> arg0) {
-			if(isNumeric(arg0))						//The generic type was declared so we know it
+			if(isNumeric(arg0))							//The generic type was declared so we know it
 				return arg0.type;
 			else if(!(null == arg0.conversionType))		//We have already found the type
 				return arg0.conversionType;
@@ -575,7 +556,7 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 					if( numberCouldBeInteger(ts) ) {	//Could it be an integer? Don't negate if is possibleDouble because of X.0 corner case
 						arg0.conversionType = Integer.class;
 					} else if( possibleDouble && numberCouldBeDouble(ts) ) {
-						return (arg0.conversionType = Double.class); 	//Hierarchical. If double, automatically return double
+						return (arg0.conversionType = Double.class); 			//Hierarchical. If double, automatically return double
 					} else if(!TheoreticalValue.isTheoretical(t)) return null; 	//Skip out early if it isnt int, double, NA, inf, etc
 				}
 				return arg0.conversionType;
