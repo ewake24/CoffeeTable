@@ -160,6 +160,7 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 			};
 		};
 		
+		/* -- Helper methods -- */
 		NumericVector(DataColumn<E> col) {
 			super(col);
 			if(!col.isNumeric())
@@ -192,6 +193,18 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 		
 		public E convertIntegerToE(int i) {
 			return (E)new Integer(i);
+		}
+		
+		
+		/* --- Math methods --- */
+		public NumericVector<Double> center() {
+			DataColumn dc = new DataColumn();
+			double mean = mean();
+			for(String e : this.charRep) {
+				if(TheoreticalValue.isTheoretical(e))
+					dc.add(Infinite.isInfinite(e) ? new Infinite() : new MissingValue());
+				else dc.add(new Double(e) - mean);
+			} return new NumericVector<Double>(dc);
 		}
 		
 		public double distance(NumericVector<E> col2, int q) {
@@ -342,6 +355,18 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 		 */
 		public double standardDeviationCalc() {
 			return Math.sqrt(varianceCalc());
+		}
+		
+		public NumericVector<Double> standardize() {
+			double sd = standardDeviationCalc();
+			NumericVector<Double> centered = center();
+			DataColumn dc = new DataColumn();
+			for(Double dub : centered) {
+				if(TheoreticalValue.isTheoretical(dub))
+					dc.add(Infinite.isInfinite(dub) ? new Infinite() : new MissingValue());
+				else dc.add(dub/sd);
+			}
+			return new NumericVector<Double>(dc);
 		}
 		
 		/**
@@ -735,6 +760,11 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 			Class<? extends Object> converter = numericConversionType();
 			return converter.equals(Integer.class) ? asInteger() : asDouble();
 		} else throw new NumberFormatException("Cannot parse column to numeric");
+	}
+	
+	@SuppressWarnings("unchecked")
+	public DataColumn<Double> center() {
+		return (DataColumn<Double>) new NumericVector(this).center();
 	}
 	
 	/**
@@ -1267,6 +1297,11 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	@SuppressWarnings("unchecked")
 	public final double standardDeviation() {
 		return new NumericVector(this).standardDeviationCalc();
+	}
+	
+	@SuppressWarnings("unchecked")
+	public DataColumn<Double> standardize() {
+		return (DataColumn<Double>) new NumericVector(this).standardize();
 	}
 	
 	public final DataColumn<T> subsetByCondition(SubsettableCondition sub) {
