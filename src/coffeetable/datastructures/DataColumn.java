@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -149,6 +150,7 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	@SuppressWarnings("unchecked")
 	private class NumericVector<E extends Number & Comparable<? super E>> extends DataColumn<E> implements NumericEnforcementUtils {
 		private static final long serialVersionUID = 2552736984902135876L;
+		private final DecimalFormat df = new DecimalFormat("#.######");
 		public Class<?> content;
 		private DataColumn<String> charRep;
 
@@ -216,6 +218,10 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 		
 		public E convertIntegerToE(int i) {
 			return (E)new Integer(i);
+		}
+		
+		public double round(double d) {
+			return Double.parseDouble(this.df.format(d));
 		}
 		
 		public DataColumn<E> sortedFilteredClone() {
@@ -295,11 +301,11 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 		 * @param col
 		 * @return mean of column
 		 */
-		public double meanBasic() {
+		public double mean() {
 			E sum = sum();
-			return content.equals(Integer.class) ? 
+			return round(content.equals(Integer.class) ? 
 				(Double)convertIntegerToDouble((Integer)sum) / filtered.size() : 
-					(Double)sum / filtered.size();
+					(Double)sum / filtered.size());
 		}
 		
 		/**
@@ -404,7 +410,7 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 		 * @return variance of column
 		 */
 		public double varianceCalc() {
-			return center().powerTransform(2).sum();
+			return round(center().powerTransform(2).sum());
 		}
 	}
 	
@@ -1013,8 +1019,8 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	 * @return mean of column
 	 */
 	@SuppressWarnings("unchecked")
-	public final double mean() {
-		return new NumericVector(this).meanBasic();
+	public double mean() {
+		return new NumericVector(this).mean();
 	}
 	
 	/**
