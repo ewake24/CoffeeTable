@@ -7,7 +7,7 @@ import java.util.TreeMap;
 
 public class RenderableSchemaSafeDataStructure extends SchemaSafeDataStructure implements java.io.Serializable {
 	private static final long serialVersionUID = 1363057954945899788L;
-	protected String tableName;
+	private String tableName;
 	
 	{
 		tableName = "New Table";

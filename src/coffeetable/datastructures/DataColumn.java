@@ -194,6 +194,22 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 			return (E)new Integer(i);
 		}
 		
+		public double distance(NumericVector<E> col2, int q) {
+			if(this.size() != col2.size())
+				throw new DimensionMismatchException("Dim mismatch");
+			else if(q < 1)
+				throw new IllegalArgumentException("q must be greater than zero");
+			
+			double answer = 0;
+			for(int i = 0; i < this.size(); i++) {
+				answer += Math.pow( Math.abs(new Double(charRep.get(i)) - new Double(col2.charRep.get(i))), q );
+			}
+			
+			if(answer != 0)
+				return Math.pow(Math.E, Math.log(answer)/(double)q);
+			return 0;
+		}
+		
 		/**
 		 * Calculate vector similarity between two columns
 		 * @param col
@@ -201,14 +217,7 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 		 * @return similarity score between two vectors
 		 */
 		public double euclideanDistance(NumericVector<E> col2) {
-			if(this.size() != col2.size())
-				throw new DimensionMismatchException("Dim mismatch");
-			
-			double answer = 0;
-			for(int i = 0; i < this.size(); i++) {
-				answer += Math.pow(new Double(charRep.get(i)) - new Double(col2.charRep.get(i)), 2);
-			}
-			return Math.sqrt(answer);
+			return distance(col2,2);
 		}
 		
 		private NumericVector<E> filterMissing(NumericVector<E> col) {
@@ -886,6 +895,18 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 		if(!(o instanceof DataColumn))
 			return false;
 		return o.hashCode() == this.hashCode();
+	}
+	
+	/**
+	 * Returns the Minkowski distance between the two columns, where q
+	 * is the distance tuning knob.
+	 * @param arg0
+	 * @param q
+	 * @return the Minkowski distance between two columns
+	 */
+	@SuppressWarnings("unchecked")
+	public final double distance(DataColumn arg0, int q) {
+		return new NumericVector(this).distance(new NumericVector(arg0), q);
 	}
 	
 	/**

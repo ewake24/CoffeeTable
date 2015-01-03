@@ -434,11 +434,11 @@ public class DataTable extends RenderableSchemaSafeDataStructure implements java
 	 */
 	public void clear() {
 		super.clear();
-		tableName = null;
+		super.setName(null);
 	}
 	
 	public Object clone() {
-		DataTable clone = new DataTable(rows(), tableName);
+		DataTable clone = new DataTable(rows(), name());
 		for(String key : this.options().keySet())
 			clone.setOptions(key, this.options().get(key));
 		for(Exception e : exceptionLog())
@@ -558,7 +558,7 @@ public class DataTable extends RenderableSchemaSafeDataStructure implements java
 			throw new IllegalArgumentException("Specified column not found in table");
 		boolean[] keeps = eval.subsetLogicalVector(sub);
 		
-		DataTable dt = new DataTable(rows(), tableName+"_Subset");
+		DataTable dt = new DataTable(rows(), name()+"_Subset");
 		for(String key : this.options().keySet())
 			dt.setOptions(key, this.options().get(key));
 		
@@ -608,7 +608,7 @@ public class DataTable extends RenderableSchemaSafeDataStructure implements java
 	 * without any duplicate rows
 	 */
 	public DataTable uniqueRows() {
-		DataTable dt = new DataTable(super.uniqueRowSet(), tableName);
+		DataTable dt = new DataTable(super.uniqueRowSet(), name());
 		for(String key : this.options().keySet())
 			dt.setOptions(key, this.options().get(key));
 		
