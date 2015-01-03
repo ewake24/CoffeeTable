@@ -359,12 +359,12 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 		
 		public NumericVector<Double> standardize() {
 			double sd = standardDeviationCalc();
-			NumericVector<Double> centered = center();
+			NumericVector centered = center();
 			DataColumn dc = new DataColumn();
-			for(Double dub : centered) {
+			for(Object dub : centered) {
 				if(TheoreticalValue.isTheoretical(dub))
 					dc.add(Infinite.isInfinite(dub) ? new Infinite() : new MissingValue());
-				else dc.add(dub/sd);
+				else dc.add((Double)dub/sd);
 			}
 			return new NumericVector<Double>(dc);
 		}
@@ -421,7 +421,7 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 			
 			double avg = meanBasic();
 			double sum = 0;
-			for( String o : charRep ) {
+			for( String o : col.charRep ) {
 				sum += (new Double(o) - avg) * (new Double(o) - avg);
 			}
 			return sum / (col.size()-1);
