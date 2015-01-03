@@ -21,7 +21,8 @@ import coffeetable.math.Infinite;
 /**
  * A collection of DataColumns and DataRows. This data structure
  * is designed to behave similar to an R dataframe or C# DataTable.  As in R, it provides the
- * ability to alter column classes, transform the matrix and perform vector operations on the columns.
+ * ability to alter column classes, transform the matrix, perform vector operations on the columns
+ * and subset based on a SubsettableCondition class.
  * 
  * NOTE: missing values should be represented as such (use the provided class 
  * MissingValue). Use of <tt>null</tt> will throw a NullPointerException for various
@@ -33,6 +34,7 @@ import coffeetable.math.Infinite;
  * @see MissingValue
  * @see Infinite
  * @see SchemaSafeDataStructure
+ * @see SubsettableCondition
  */
 @SuppressWarnings("rawtypes")
 public class DataTable extends RenderableSchemaSafeDataStructure implements java.io.Serializable, Cloneable, RowUtilities {

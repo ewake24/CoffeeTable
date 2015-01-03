@@ -145,7 +145,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * Add a collection of DataColumns to the container
 	 * @param columns
 	 */
-	public final void addAllColumns(Collection<DataColumn> columns) {
+	public void addAllColumns(Collection<DataColumn> columns) {
 		for(DataColumn col : columns)
 			this.addColumn(col);
 	}
@@ -154,7 +154,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * Add a collection of DataRows to the container
 	 * @param rows
 	 */
-	public final void addAllRows(Collection<DataRow> rows) {
+	public void addAllRows(Collection<DataRow> rows) {
 		for(DataRow row : rows)
 			this.addRow(row);
 	}
@@ -163,7 +163,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * Add a single DataRow to the container
 	 * @param row
 	 */
-	public final void addRow(DataRow row) {
+	public void addRow(DataRow row) {
 		tableUpdate();
 		ContentFactory.schemaAssignment(this,row);
 		if(!schemaIsSafe(row.schema()))
@@ -179,7 +179,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * @param index
 	 * @param row
 	 */
-	public final void addRow(int index, DataRow row) {
+	public void addRow(int index, DataRow row) {
 		tableUpdate();
 		if(rows.isEmpty() || null == schema || index==rows.size()) {
 			addRow(row); return;
@@ -195,7 +195,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * Add a single DataColumn to the container
 	 * @param col
 	 */
-	public final void addColumn(DataColumn<?> col) {
+	public void addColumn(DataColumn<?> col) {
 		tableUpdate();
 		if(cols.isEmpty() || null==schema)
 			updateSchemaFromNew(col.contentClass());
@@ -212,7 +212,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * @param index
 	 * @param col
 	 */
-	public final void addColumn(int index, DataColumn<?> col) {
+	public void addColumn(int index, DataColumn<?> col) {
 		tableUpdate();
 		if(cols.isEmpty() || null==schema || index==cols.size()) {
 			addColumn(col); return;
@@ -516,7 +516,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * @return the old Object
 	 */
 	@SuppressWarnings("unchecked")
-	public final Object set(int rowIndex, int colIndex, Object o) {
+	public Object set(int rowIndex, int colIndex, Object o) {
 		Object old;
 		old = cols.get(colIndex).set(rowIndex, o);
 		rows.get(rowIndex).set(colIndex, o);
@@ -524,7 +524,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	}
 	
 	/**
-	 * If returns zero, indicates an unsuccessful set. For a list of 
+	 * Throws a nullpointer exception to indicate an unsuccessful set. For a list of 
 	 * settable options, see the method: getOptionKeys() or use the addOption()
 	 * method to create a new option
 	 * @param option
@@ -533,9 +533,9 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 */
 	public final Integer setOptions(String option, Integer num) {
 		if(!options.containsKey(option))
-			return 0;
-		else if(num < 1)
-			return 0;
+			throw new NullPointerException();
+		//else if(num < 1)
+		//	return 0;
 		else return options.put(option, num);
 	}
 	
@@ -545,7 +545,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * @param newCol
 	 * @return the removed/old column at the specified index
 	 */
-	public final DataColumn setColumn(int index, DataColumn newCol) {
+	public DataColumn setColumn(int index, DataColumn newCol) {
 		if(newCol.isEmpty() || newCol.size() != this.nrow())
 			throw new DimensionMismatchException();
 		
@@ -560,7 +560,7 @@ public abstract class SchemaSafeDataStructure implements Serializable {
 	 * @param newRow
 	 * @return the removed/old row from the specified index
 	 */
-	public final DataRow setRow(int index, DataRow newRow) {
+	public DataRow setRow(int index, DataRow newRow) {
 		if(newRow.isEmpty() || newRow.size() != this.ncol())
 			throw new DimensionMismatchException();
 		

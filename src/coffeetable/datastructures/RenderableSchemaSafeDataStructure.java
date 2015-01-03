@@ -27,6 +27,8 @@ public class RenderableSchemaSafeDataStructure extends SchemaSafeDataStructure i
 		super.addOption("max.print", 10000);	//What point the print-to-console cuts off
 		super.addOption("col.whitespace", 4);	//Space between columns
 		super.addOption("default.head", 6);		//Num rows in default printHead()
+		super.addOption("print.col.names",1);
+		super.addOption("print.table.name", 1);
 	}
 	
 	/**
@@ -93,6 +95,8 @@ public class RenderableSchemaSafeDataStructure extends SchemaSafeDataStructure i
 		}
 		int colWhitespace = options().get("col.whitespace");
 		int maxPrint = options().get("max.print");
+		boolean printname = options().get("print.table.name") == 1;
+		boolean printcolnames = options().get("print.col.names") == 1;
 		
 		/* First generate the HashMap storing the column to the width
 		 * Col number : col width */
@@ -102,7 +106,8 @@ public class RenderableSchemaSafeDataStructure extends SchemaSafeDataStructure i
 			colToWidth.put( index++, column.width() );
 	
 		/* Table/column names: */
-		System.out.println("# -- " + tableName + " -- #");
+		if(printname)
+			System.out.println("# -- " + tableName + " -- #");
 		LinkedList<String> colnames = new LinkedList<String>(columnNames());
 		StringBuilder names = new StringBuilder();
 		for(int i = 0; i < colnames.size(); i++) {
@@ -119,7 +124,8 @@ public class RenderableSchemaSafeDataStructure extends SchemaSafeDataStructure i
 			
 			names.append(printerHelper(colToWidth, name, i, colWhitespace));
 		}
-		System.out.println(names.toString());
+		if(printcolnames)
+			System.out.println(names.toString());
 		
 		/* Rows: */
 		int rowCount = 0;

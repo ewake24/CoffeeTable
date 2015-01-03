@@ -29,6 +29,9 @@ import coffeetable.utils.SchemaMismatchException;
  * A column object for DataTable. When used with DataTable, able to convert to various types, similar
  * to R vectors (WARNING: NO SUPPORT FOR CONVERTING TO LONG TYPE VARIABLES FROM OTHER TYPES).  Additionally,
  * implements many statistical methods for data analysis.
+ * 
+ * The DataColumn is the 'heavy lifter' of the DataTable family; it handles all typing, conversions, math,
+ * etc. As such, many methods are declared final for the sake of maintaining homeostatic extensibility.
  * @author Taylor G Smith
  * @param <T>
  */
@@ -230,6 +233,15 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 			
 			return (E) (highestCommonConvertableClass(col).equals(Double.class) ? 
 					convertDoubleToE(answer) : convertDoubleToInteger(answer));
+		}
+		
+		public NumericVector<E> logTransform() {
+			DataColumn dc = new DataColumn();
+			for(E e : this) {
+				if(TheoreticalValue.isTheoretical(e))
+					dc.add(Infinite.isInfinite(e) ? new Infinite("-inf") : new MissingValue());
+				else dc.add(Math.log(new Double(e.toString())));
+			} return new NumericVector<E>(dc);
 		}
 
 		/**
@@ -921,6 +933,11 @@ public class DataColumn<T extends Comparable<? super T> & java.io.Serializable> 
 	 */
 	public final boolean isNumeric() {
 		return TypeConversionUtils.isNumeric(this);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public DataColumn<T> logTransform() {
+		return (DataColumn<T>) new NumericVector(this).logTransform();
 	}
 	
 	/* -- Intra-DataTable sorts -- */
