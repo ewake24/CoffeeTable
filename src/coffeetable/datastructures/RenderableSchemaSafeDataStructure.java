@@ -5,7 +5,7 @@ import java.util.LinkedList;
 import java.util.TreeMap;
 
 
-public class RenderableSchemaSafeDataStructure extends SchemaSafeDataStructure implements java.io.Serializable {
+public abstract class RenderableSchemaSafeDataStructure extends SchemaSafeDataStructure implements java.io.Serializable {
 	private static final long serialVersionUID = 1363057954945899788L;
 	private String tableName;
 	
