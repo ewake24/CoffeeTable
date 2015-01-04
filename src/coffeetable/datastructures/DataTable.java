@@ -346,18 +346,6 @@ public class DataTable extends AbstractDataTable implements java.io.Serializable
 		return clone;
 	}
 	
-	/**
-	 * Dices the DataTable into a subset
-	 * @param rowStart - row from which to begin subset (inclusive)
-	 * @param rowEnd - row at which to end subset (inclusive)
-	 * @param colStart - col at which to begin subset (inclusive)
-	 * @param colEnd - col at which to end subset (inclusive)
-	 * @return a copy of the current instance of DataTable diced at the given boundaries
-	 */
-	public final DataTable dice(int rowStart, int rowEnd, int colStart, int colEnd) {
-		return (DataTable) super.dice(rowStart,rowEnd,colStart,colEnd);
-	}
-	
 	public boolean equals(Object o) {
 		if(!(o instanceof DataTable))
 			return false;

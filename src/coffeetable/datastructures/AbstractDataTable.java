@@ -122,16 +122,16 @@ public abstract class AbstractDataTable extends RenderableSchemaSafeDataStructur
 	}
 	
 	/**
-	 * Dices the AbstractDataTable into a subset. Must be overridden with a cast:
-	 * <tt>return (YourSubClass) super.dice(rowStart,rowEnd,colStart,colEnd);</tt>
+	 * Dices the AbstractDataTable into a subset. Requires a cast to
+	 * your specific sub class.
 	 * 
 	 * @param rowStart - row from which to begin subset (inclusive)
 	 * @param rowEnd - row at which to end subset (inclusive)
 	 * @param colStart - col at which to begin subset (inclusive)
 	 * @param colEnd - col at which to end subset (inclusive)
-	 * @return a copy of the current instance of DataTable diced at the given boundaries
+	 * @return a copy of the current instance of AbstractDataTable diced at the given boundaries
 	 */
-	public AbstractDataTable dice(int rowStart, int rowEnd, int colStart, int colEnd) {
+	public final AbstractDataTable dice(int rowStart, int rowEnd, int colStart, int colEnd) {
 		return new SubTable(this, rowStart, rowEnd, colStart, colEnd).dice();
 	}
 
